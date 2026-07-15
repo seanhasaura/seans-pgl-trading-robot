@@ -1,0 +1,443 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <script src="mock-api.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公司管理 — PGL Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="admin-users.css?v=7">
+    <style>
+        .company-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .company-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .company-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+        }
+        .company-card-accent {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            border-radius: 16px 16px 0 0;
+        }
+        .company-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .company-avatar {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.2rem; color: white;
+            flex-shrink: 0;
+        }
+        .company-name { font-weight: 700; font-size: 1.05rem; }
+        .company-code {
+            font-size: 0.75rem; color: var(--text-muted);
+            font-family: monospace; letter-spacing: 1px;
+        }
+        .company-stats {
+            display: flex; gap: 1rem;
+            margin: 1rem 0;
+            padding: 0.75rem;
+            background: rgba(10,15,24,0.4);
+            border-radius: 8px;
+        }
+        .company-stat { text-align: center; flex: 1; }
+        .company-stat-val { font-size: 1.4rem; font-weight: 800; color: var(--brand-primary-light); }
+        .company-stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        .company-note { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 20px; }
+        .company-actions { display: flex; gap: 0.5rem; }
+        .add-company-btn {
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 0.5rem;
+            min-height: 200px;
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+        .add-company-btn:hover {
+            border-color: var(--brand-primary);
+            color: var(--brand-primary-light);
+            background: rgba(103,139,145,0.05);
+        }
+        .add-company-btn .plus { font-size: 2rem; }
+        /* Modal */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:999; align-items:center; justify-content:center; }
+        .modal-overlay.open { display:flex; }
+        .modal-box { background:#141c2a; border:1px solid var(--border-color); border-radius:16px; padding:2rem; width:100%; max-width:480px; }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+        .modal-close { background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; }
+        .color-picker-row { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem; }
+        .color-dot {
+            width:28px; height:28px; border-radius:50%; cursor:pointer;
+            border:2px solid transparent; transition:0.2s;
+        }
+        .color-dot.selected, .color-dot:hover { border-color: white; transform: scale(1.15); }
+        .member-list { margin-top:0.5rem; }
+        .member-row { display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid rgba(103,139,145,0.1); }
+        .member-row:last-child { border-bottom:none; }
+        .member-avatar-sm { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:white;flex-shrink:0; }
+        .empty-company { text-align:center; padding:3rem; color:var(--text-muted); }
+    </style>
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+    <!-- 側邊欄 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="PGL Logo" class="logo-img">
+            <span class="logo-text">PGL Admin</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="admin.html">👥 註冊者管理</a></li>
+            <li><a href="companies.html" class="active">🏢 公司管理</a></li>
+            <li><a href="dashboard.html">📊 交易數據分析</a></li>
+            <li><a href="settings.html">⚙️ 系統設定</a></li>
+            <li><a href="index.html">🏠 返回首頁</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="admin-badge">
+                <span class="badge-dot"></span>
+                <span>系統運作中</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主區塊 -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+                <h2 class="page-title">🏢 公司 / 團隊管理</h2>
+            </div>
+            <div class="admin-user-info">
+                <button class="btn btn-primary btn-sm" onclick="openAddModal()">➕ 新增公司</button>
+                <div class="avatar">A</div>
+            </div>
+        </header>
+
+        <div class="admin-content">
+
+            <!-- 統計列 -->
+            <section class="stats-row" id="statsRow">
+                <div class="stat-chip">
+                    <span class="stat-chip-icon">🏢</span>
+                    <div>
+                        <div class="stat-chip-val" id="statCompanies">—</div>
+                        <div class="stat-chip-label">公司總數</div>
+                    </div>
+                </div>
+                <div class="stat-chip">
+                    <span class="stat-chip-icon">👥</span>
+                    <div>
+                        <div class="stat-chip-val" id="statWithCompany">—</div>
+                        <div class="stat-chip-label">已歸屬會員</div>
+                    </div>
+                </div>
+                <div class="stat-chip">
+                    <span class="stat-chip-icon">🔓</span>
+                    <div>
+                        <div class="stat-chip-val" id="statNoCompany">—</div>
+                        <div class="stat-chip-label">未歸屬會員</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 公司卡片列表 -->
+            <div class="company-grid" id="companyGrid">
+                <div class="empty-company" id="loadingMsg">載入中…</div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- 新增/編輯公司 Modal -->
+<div class="modal-overlay" id="companyModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitle">➕ 新增公司</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="form-group">
+            <label>公司名稱 *</label>
+            <input type="text" id="inputName" placeholder="例：XX 投資有限公司">
+        </div>
+        <div class="form-group">
+            <label>公司代碼 * <small style="color:var(--text-muted)">(大寫英文，唯一識別碼)</small></label>
+            <input type="text" id="inputCode" placeholder="例：XX" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+            <label>所屬縣市 *</label>
+            <select id="inputCity" style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:white;">
+                <option value="台北市">台北市</option>
+                <option value="新北市">新北市</option>
+                <option value="桃園市">桃園市</option>
+                <option value="台中市">台中市</option>
+                <option value="台南市">台南市</option>
+                <option value="高雄市">高雄市</option>
+                <option value="基隆市">基隆市</option>
+                <option value="新竹市">新竹市</option>
+                <option value="嘉義市">嘉義市</option>
+                <option value="新竹縣">新竹縣</option>
+                <option value="苗栗縣">苗栗縣</option>
+                <option value="彰化縣">彰化縣</option>
+                <option value="南投縣">南投縣</option>
+                <option value="雲林縣">雲林縣</option>
+                <option value="嘉義縣">嘉義縣</option>
+                <option value="屏東縣">屏東縣</option>
+                <option value="宜蘭縣">宜蘭縣</option>
+                <option value="花蓮縣">花蓮縣</option>
+                <option value="台東縣">台東縣</option>
+                <option value="澎湖縣">澎湖縣</option>
+                <option value="金門縣">金門縣</option>
+                <option value="連江縣">連江縣</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>代表色</label>
+            <div class="color-picker-row" id="colorPicker"></div>
+            <input type="hidden" id="inputColor" value="#678B91">
+        </div>
+        <div class="form-group">
+            <label>備註</label>
+            <input type="text" id="inputNote" placeholder="選填，例：VIP 客戶、策略合作夥伴">
+        </div>
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+            <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" style="flex:2" onclick="saveCompany()">💾 儲存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 查看成員 Modal -->
+<div class="modal-overlay" id="membersModal">
+    <div class="modal-box" style="max-width:560px;">
+        <div class="modal-header">
+            <h3 id="membersModalTitle">公司成員</h3>
+            <button class="modal-close" onclick="closeMembersModal()">✕</button>
+        </div>
+        <div id="membersList" class="member-list"></div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const COLORS = ['#678B91','#10b981','#0ea5e9','#8b5cf6','#f59e0b','#ef4444','#ec4899','#64748b'];
+let editingId = null;
+let allCompanies = [];
+
+function showToast(msg, type='info') {
+    const tc = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${{success:'✅',error:'❌',info:'ℹ️'}[type]}</span> ${msg}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.classList.add('hide'); t.addEventListener('animationend',()=>t.remove()); }, 3000);
+}
+
+function buildColorPicker(selected) {
+    const cp = document.getElementById('colorPicker');
+    cp.innerHTML = COLORS.map(c =>
+        `<div class="color-dot ${c===selected?'selected':''}" style="background:${c}" data-color="${c}" onclick="selectColor('${c}')"></div>`
+    ).join('');
+    document.getElementById('inputColor').value = selected;
+}
+
+function selectColor(c) {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.toggle('selected', d.dataset.color === c));
+    document.getElementById('inputColor').value = c;
+}
+
+function openAddModal() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = '➕ 新增公司';
+    document.getElementById('inputName').value = '';
+    document.getElementById('inputCode').value = '';
+    document.getElementById('inputCity').value = '台北市';
+    document.getElementById('inputNote').value = '';
+    buildColorPicker('#678B91');
+    document.getElementById('companyModal').classList.add('open');
+}
+
+function openEditModal(co) {
+    editingId = co.id;
+    document.getElementById('modalTitle').textContent = '✏️ 編輯公司';
+    document.getElementById('inputName').value = co.name;
+    document.getElementById('inputCode').value = co.code;
+    document.getElementById('inputCity').value = co.city || '台北市';
+    document.getElementById('inputNote').value = co.note || '';
+    buildColorPicker(co.color || '#678B91');
+    document.getElementById('companyModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('companyModal').classList.remove('open'); }
+function closeMembersModal() { document.getElementById('membersModal').classList.remove('open'); }
+
+async function saveCompany() {
+    const name = document.getElementById('inputName').value.trim();
+    const code = document.getElementById('inputCode').value.trim().toUpperCase();
+    const color = document.getElementById('inputColor').value;
+    const city = document.getElementById('inputCity').value;
+    const note = document.getElementById('inputNote').value.trim();
+    if (!name || !code) { showToast('請填寫公司名稱與代碼！', 'error'); return; }
+
+    try {
+        let res;
+        if (editingId) {
+            res = await fetch(`/api/companies/${editingId}`, {
+                method: 'PUT', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({name, code, color, city, note})
+            });
+        } else {
+            res = await fetch('/api/companies', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({name, code, color, city, note})
+            });
+        }
+        const d = await res.json();
+        if (res.ok) {
+            showToast(d.message, 'success');
+            closeModal();
+            loadCompanies();
+        } else {
+            showToast(d.detail || '操作失敗', 'error');
+        }
+    } catch(e) { showToast('伺服器連線失敗', 'error'); }
+}
+
+async function deleteCompany(id, name) {
+    if (!confirm(`確定要刪除「${name}」嗎？此操作不可還原。`)) return;
+    try {
+        const res = await fetch(`/api/companies/${id}`, { method: 'DELETE' });
+        const d = await res.json();
+        if (res.ok) { showToast(d.message, 'success'); loadCompanies(); }
+        else showToast(d.detail || '刪除失敗', 'error');
+    } catch(e) { showToast('伺服器連線失敗', 'error'); }
+}
+
+async function viewMembers(co) {
+    document.getElementById('membersModalTitle').textContent = `👥 ${co.name} 的成員 (${co.member_count} 人)`;
+    document.getElementById('membersList').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:1rem">載入中…</p>';
+    document.getElementById('membersModal').classList.add('open');
+    try {
+        const res = await fetch(`/api/users?company_id=${co.id}`);
+        const users = await res.json();
+        if (!users.length) {
+            document.getElementById('membersList').innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem">此公司尚無成員</p>';
+            return;
+        }
+        const roleLabel = {admin:'管理員',vip:'VIP',member:'一般',trial:'試用',disabled:'停用'};
+        document.getElementById('membersList').innerHTML = users.map(u => `
+            <div class="member-row">
+                <div class="member-avatar-sm" style="background:${co.color||'#678B91'}">${u.name.charAt(0)}</div>
+                <div style="flex:1">
+                    <div style="font-weight:600;font-size:0.9rem">${u.name}</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted)">${u.email}</div>
+                </div>
+                <span class="badge ${u.status==='approved'?'badge-approved':'badge-pending'}">${u.status==='approved'?'已開通':'待審核'}</span>
+                <span style="font-size:0.8rem;color:var(--text-muted)">${roleLabel[u.role]||u.role}</span>
+            </div>`).join('');
+    } catch(e) {
+        document.getElementById('membersList').innerHTML = '<p style="color:#f87171;text-align:center">載入失敗</p>';
+    }
+}
+
+async function loadCompanies() {
+    try {
+        const [companiesRes, statsRes] = await Promise.all([
+            fetch('/api/companies'),
+            fetch('/api/stats')
+        ]);
+        allCompanies = await companiesRes.json();
+        const stats = await statsRes.json();
+
+        document.getElementById('statCompanies').textContent = allCompanies.length;
+        document.getElementById('statWithCompany').textContent = allCompanies.reduce((s,c) => s + (c.member_count||0), 0);
+        document.getElementById('statNoCompany').textContent = Math.max(0, stats.total - allCompanies.reduce((s,c) => s + (c.member_count||0), 0));
+
+        const grid = document.getElementById('companyGrid');
+
+        if (!allCompanies.length) {
+            grid.innerHTML = `<div class="empty-company" style="grid-column:1/-1">
+                <div style="font-size:3rem;margin-bottom:1rem">🏢</div>
+                <p>尚未建立任何公司<br><small>點擊右上角「新增公司」開始建立</small></p>
+            </div>`;
+        } else {
+            grid.innerHTML = allCompanies.map(co => `
+                <div class="company-card">
+                    <div class="company-card-accent" style="background:${co.color||'#678B91'}"></div>
+                    <div class="company-card-header">
+                        <div class="company-avatar" style="background:${co.color||'#678B91'}">${co.code.slice(0,2)}</div>
+                        <div>
+                            <div class="company-name">${co.name} <span class="badge" style="background:rgba(255,255,255,0.1); font-size:0.7rem; font-weight:normal; vertical-align:middle; margin-left:6px;">${co.city||'未指定'}</span></div>
+                            <div class="company-code">代碼：${co.code}</div>
+                        </div>
+                    </div>
+                    <div class="company-stats">
+                        <div class="company-stat">
+                            <div class="company-stat-val">${co.member_count||0}</div>
+                            <div class="company-stat-label">成員數</div>
+                        </div>
+                        <div class="company-stat">
+                            <div class="company-stat-val" style="font-size:0.85rem;color:var(--text-muted)">${co.created_at?.slice(0,10)||'—'}</div>
+                            <div class="company-stat-label">建立日期</div>
+                        </div>
+                    </div>
+                    <div class="company-note">${co.note || '<span style="opacity:0.4">（無備註）</span>'}</div>
+                    <div class="company-actions">
+                        <button class="btn btn-secondary btn-sm" style="flex:1" onclick='viewMembers(${JSON.stringify(co)})'>👥 成員 (${co.member_count||0})</button>
+                        <button class="btn btn-secondary btn-sm" onclick='openEditModal(${JSON.stringify(co)})'>✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteCompany('${co.id}','${co.name.replace(/'/g,"\\'")}')">🗑️</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        // 加上「新增」卡片
+        grid.innerHTML += `
+            <div class="add-company-btn" onclick="openAddModal()">
+                <div class="plus">＋</div>
+                <span>新增公司 / 團隊</span>
+            </div>`;
+
+    } catch(e) {
+        document.getElementById('companyGrid').innerHTML = '<div class="empty-company">⚠️ 伺服器連線失敗，請確認伺服器正在運行</div>';
+    }
+}
+
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+});
+document.getElementById('inputCode').addEventListener('input', e => {
+    e.target.value = e.target.value.toUpperCase();
+});
+
+loadCompanies();
+</script>
+</body>
+</html>

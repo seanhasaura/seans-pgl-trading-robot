@@ -1,0 +1,954 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <script src="mock-api.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="dashboard_title">PGL 使用者控制台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=7">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body class="admin-body">
+
+    <div class="admin-layout">
+        <!-- 側邊欄 -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="logo.png" alt="PGL Logo" class="logo-img">
+                <span class="logo-text">PGL</span>
+            </div>
+            <ul class="sidebar-nav" id="sidebarNav">
+                <li><a href="#" class="active" data-tab="overview" data-i18n="nav_overview">📊 總覽與控制</a></li>
+                <li><a href="#" data-tab="performance" data-i18n="nav_performance">📈 績效與風控</a></li>
+                <li><a href="#" data-tab="attribution" data-i18n="nav_attribution">🔬 歸因分析</a></li>
+                <li><a href="#" data-tab="portfolio" data-i18n="nav_portfolio">🌐 統一持倉總覽</a></li>
+                <li><a href="#" data-tab="risk" data-i18n="nav_risk">🚨 風險儀錶板</a></li>
+                <li><a href="#" data-tab="digital" data-i18n="nav_digital">🌐 數位資產管理</a></li>
+                <li><a href="#" data-tab="vip" data-i18n="nav_vip">👑 VIP 會員中心</a></li>
+                <li><a href="#" id="logoutBtn" data-i18n="nav_logout">🚣 登出</a></li>
+            </ul>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="admin-header-toggle" id="sidebarToggle" style="display: none; font-size: 1.5rem; cursor: pointer; color: white; margin-right: 0.8rem;">☰</div>
+                <h2 id="pageTitle" data-i18n="nav_overview">總覽與控制</h2>
+                <div class="admin-user-info">
+                    <select id="i18nSelector" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: white; padding: 0.35rem 0.7rem; border-radius: 6px; font-size: 0.82rem; cursor: pointer; outline: none; margin-right: 0.5rem;">
+                        <option value="zh-TW" data-i18n="lang_zh_tw" style="background-color: #111b27; color: white;">繁體中文</option>
+                        <option value="zh-CN" data-i18n="lang_zh_cn" style="background-color: #111b27; color: white;">简体中文</option>
+                        <option value="en" data-i18n="lang_en" style="background-color: #111b27; color: white;">English</option>
+                    </select>
+                    <span id="welcomeName">User</span>
+                    <div class="avatar">U</div>
+                </div>
+            </header>
+
+            <div class="admin-content">
+
+                <!-- ===== 面板一：總覽與控制 ===== -->
+                <div id="tab-overview" class="tab-panel active">
+                    <!-- 頂部摘要卡片與控制列 -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <p class="text-muted" style="margin: 0;" data-i18n="header_overview_subtitle">自動量化交易控制台</p>
+                            <h3 style="margin: 0; font-size: 1.5rem; font-weight: 800;"><span data-i18n="header_overview_title">交易機器人總覽</span> <span id="botLimitBadge" style="font-size: 0.8rem; background: var(--border-color); padding: 0.2rem 0.6rem; border-radius: 99px; margin-left: 0.5rem; vertical-align: middle;">已建立：0 / 1</span></h3>
+                        </div>
+                        <button id="openCreateBotModalBtn" class="btn btn-success" style="padding: 0.7rem 1.4rem; display: flex; align-items: center; gap: 8px;">
+                            <span>🤖</span> <span data-i18n="header_btn_add_bot">新增交易機器人</span>
+                        </button>
+                    </div>
+
+                    <!-- 機器人整體數據 -->
+                    <div class="attr-summary-row" style="margin-bottom: 2rem;">
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="stat_active_bots">運行中機器人</p>
+                            <div class="attr-stat-val" id="totalActiveBotsVal" style="color: #34d399;">0</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="stat_total_pnl">總收益 (All PnL)</p>
+                            <div class="attr-stat-val" id="totalBotPnlVal" style="color: #10b981;">$0.00</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="stat_total_trades">總交易筆數</p>
+                            <div class="attr-stat-val" id="totalBotTradesVal">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="stat_overall_mdd">整體回撤 (MDD)</p>
+                            <div class="attr-stat-val" id="overallBotMddVal" style="color: #f87171;">0.00%</div>
+                        </div>
+                    </div>
+
+                    <!-- 機器人卡片列表容器 -->
+                    <div id="botsContainer" class="dashboard-grid">
+                        <!-- 經由 JS 動態產生，或在此呈現 empty state -->
+                        <div class="admin-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem;">
+                            <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">🤖</div>
+                            <h3 style="margin-bottom: 0.5rem;" data-i18n="empty_title">尚未建立任何交易機器人</h3>
+                            <p class="text-muted" style="max-width: 450px; margin: 0 auto 1.5rem auto;" data-i18n="empty_desc">點擊右上方「新增交易機器人」按鈕，綁定您的交易所 API Key，即可啟動多策略、多商品自動量化交易！</p>
+                            <button id="emptyStateCreateBtn" class="btn btn-primary" style="padding: 0.7rem 1.5rem;" data-i18n="empty_btn">🚀 立即新增第一個機器人</button>
+                        </div>
+                    </div>
+
+                    <!-- ===== 新增機器人 Modal 彈窗 ===== -->
+                    <div id="createBotModal" class="modal-overlay" style="display: none;">
+                        <div class="modal-box" style="max-width: 500px;">
+                            <div class="modal-header">
+                                <h3 data-i18n="modal_add_title">🤖 新增交易機器人</h3>
+                                <span class="modal-close" id="closeCreateModalBtn">&times;</span>
+                            </div>
+                            <form id="createBotForm" class="modal-body" style="padding: 0 0 1rem 0;">
+                                <div class="form-group">
+                                    <label for="newBotName" data-i18n="label_bot_name">機器人名稱</label>
+                                    <input type="text" id="newBotName" required data-i18n-placeholder="placeholder_bot_name" placeholder="例如: 均線多頭一號">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newBotSymbol" data-i18n="label_symbol">交易商品</label>
+                                    <select id="newBotSymbol" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(10,15,24,0.5); border: 1px solid var(--border-color); color: white;">
+                                        <option value="EUR/USD">EUR/USD (歐元/美元)</option>
+                                        <option value="GBP/USD">GBP/USD (英鎊/美元)</option>
+                                        <option value="USD/JPY">USD/JPY (美元/日圓)</option>
+                                        <option value="AUD/USD">AUD/USD (澳幣/美元)</option>
+                                        <option value="BTCUSDT">BTC/USDT (比特幣/泰達幣)</option>
+                                        <option value="ETHUSDT">ETH/USDT (乙太幣/泰達幣)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group form-flex-row">
+                                    <div style="flex: 1;">
+                                        <label for="newBotExchange" data-i18n="label_exchange">連接交易所</label>
+                                        <select id="newBotExchange" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(10,15,24,0.5); border: 1px solid var(--border-color); color: white;">
+                                            <option value="TradeStation" data-i18n="exchange_tradestation">TradeStation</option>
+                                            <option value="Binance" data-i18n="exchange_binance">Binance</option>
+                                            <option value="FXCM" data-i18n="exchange_fxcm">FXCM</option>
+                                            <option value="Bybit" data-i18n="exchange_bybit">Bybit</option>
+                                            <option value="OKX" data-i18n="exchange_okx">OKX</option>
+                                            <option value="Kraken" data-i18n="exchange_kraken">Kraken</option>
+                                        </select>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label for="newBotStrategy" data-i18n="label_strategy">交易策略</label>
+                                        <select id="newBotStrategy" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(10,15,24,0.5); border: 1px solid var(--border-color); color: white;">
+                                            <option value="trend_follow" data-i18n="strategy_trend_follow">趨勢追蹤 (Trend Follow)</option>
+                                            <option value="ma_cross" data-i18n="strategy_ma_cross">均線交叉 (MA Cross)</option>
+                                            <option value="pattern_prob" data-i18n="strategy_pattern_prob">型態機率 (Pattern Prob)</option>
+                                            <option value="grid" data-i18n="strategy_grid">網格交易 (Grid Trading)</option>
+                                            <option value="arbitrage" data-i18n="strategy_arbitrage">套利策略 (Arbitrage)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newBotApiKey" data-i18n="label_api_key">API Key</label>
+                                    <input type="text" id="newBotApiKey" required data-i18n-placeholder="placeholder_api_key" placeholder="請輸入 API Key">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newBotSecretKey" data-i18n="label_secret_key">Secret Key</label>
+                                    <input type="password" id="newBotSecretKey" required data-i18n-placeholder="placeholder_secret_key" placeholder="請輸入 Secret Key">
+                                </div>
+                                <div class="form-group form-flex-row" style="margin-top: 1rem;">
+                                    <div style="flex: 1;">
+                                        <label for="newBotMaxPos" data-i18n="label_max_pos">單筆最大倉位 (%)</label>
+                                        <input type="number" id="newBotMaxPos" value="5" min="1" max="100" step="0.5" required style="width:100%; padding:0.8rem; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white;">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label for="newBotStopLoss" data-i18n="label_stop_loss">停損比例 (%)</label>
+                                        <input type="number" id="newBotStopLoss" value="2" min="0.1" max="50" step="0.1" required style="width:100%; padding:0.8rem; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white;">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label for="newBotTakeProfit" data-i18n="label_take_profit">停利比例 (%)</label>
+                                        <input type="number" id="newBotTakeProfit" value="5" min="0.1" max="100" step="0.1" required style="width:100%; padding:0.8rem; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white;">
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                    <button type="button" class="btn btn-secondary" id="cancelCreateBtn" style="flex: 1; padding: 0.8rem;" data-i18n="btn_cancel">取消</button>
+                                    <button type="submit" class="btn btn-success" style="flex: 1; padding: 0.8rem;" data-i18n="btn_save_bind">建立並綁定</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ===== 編輯機器人 Modal 彈窗 ===== -->
+                    <div id="editBotModal" class="modal-overlay" style="display: none;">
+                        <div class="modal-box" style="max-width: 500px;">
+                            <div class="modal-header">
+                                <h3 data-i18n="modal_edit_title">⚙️ 調整機器人參數</h3>
+                                <span class="modal-close" id="closeEditModalBtn">&times;</span>
+                            </div>
+                            <form id="editBotForm" class="modal-body" style="padding: 0 0 1rem 0;">
+                                <input type="hidden" id="editBotId">
+                                <div class="form-group">
+                                    <label for="editBotName" data-i18n="label_bot_name">機器人名稱</label>
+                                    <input type="text" id="editBotName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editBotSymbol" data-i18n="label_symbol">交易商品</label>
+                                    <select id="editBotSymbol" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(10,15,24,0.5); border: 1px solid var(--border-color); color: white;">
+                                        <option value="EUR/USD">EUR/USD (歐元/美元)</option>
+                                        <option value="GBP/USD">GBP/USD (英鎊/美元)</option>
+                                        <option value="USD/JPY">USD/JPY (美元/日圓)</option>
+                                        <option value="AUD/USD">AUD/USD (澳幣/美元)</option>
+                                        <option value="BTCUSDT">BTC/USDT (比特幣/泰達幣)</option>
+                                        <option value="ETHUSDT">ETH/USDT (乙太幣/泰達幣)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editBotStrategy" data-i18n="label_strategy">交易策略</label>
+                                    <select id="editBotStrategy" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(10,15,24,0.5); border: 1px solid var(--border-color); color: white;">
+                                        <option value="trend_follow" data-i18n="strategy_trend_follow">趨勢追蹤 (Trend Follow)</option>
+                                        <option value="ma_cross" data-i18n="strategy_ma_cross">均線交叉 (MA Cross)</option>
+                                        <option value="pattern_prob" data-i18n="strategy_pattern_prob">型態機率 (Pattern Prob)</option>
+                                        <option value="grid" data-i18n="strategy_grid">網格交易 (Grid Trading)</option>
+                                        <option value="arbitrage" data-i18n="strategy_arbitrage">套利策略 (Arbitrage)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group form-flex-row" style="margin-top: 1rem;">
+                                    <div style="flex: 1;">
+                                        <label for="editBotMaxPos" data-i18n="label_max_pos">單筆最大倉位 (%)</label>
+                                        <input type="number" id="editBotMaxPos" min="1" max="100" step="0.5" required style="width:100%; padding:0.8rem; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white;">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label for="editBotStopLoss" data-i18n="label_stop_loss">停損比例 (%)</label>
+                                        <input type="number" id="editBotStopLoss" min="0.1" max="50" step="0.1" required style="width:100%; padding:0.8rem; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white;">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label for="editBotTakeProfit" data-i18n="label_take_profit">停利比例 (%)</label>
+                                        <input type="number" id="editBotTakeProfit" min="0.1" max="100" step="0.1" required style="width:100%; padding:0.8rem; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white;">
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                    <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="flex: 1; padding: 0.8rem;" data-i18n="btn_cancel">取消</button>
+                                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 0.8rem;" data-i18n="btn_save_changes">儲存修改</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 面板二：績效與風控 ===== -->
+                <div id="tab-performance" class="tab-panel">
+                    <div class="dashboard-grid">
+                        <!-- 左：績效圖表 -->
+                        <div class="admin-card" style="grid-column: 1 / -1;">
+                            <h3 data-i18n="perf_history_title">📈 歷史報酬曲線</h3>
+                            <div class="perf-chart-container">
+                                <div class="perf-chart">
+                                    <!-- 模擬 SVG 折線圖 -->
+                                    <svg viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+                                        <defs>
+                                            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="#678B91" stop-opacity="0.5"/>
+                                                <stop offset="100%" stop-color="#678B91" stop-opacity="0"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <path d="M0,120 L60,105 L120,90 L180,80 L240,60 L300,55 L360,40 L420,30 L480,20 L540,10 L600,5" stroke="#678B91" stroke-width="2.5" fill="none"/>
+                                        <path d="M0,120 L60,105 L120,90 L180,80 L240,60 L300,55 L360,40 L420,30 L480,20 L540,10 L600,5 L600,150 L0,150 Z" fill="url(#lineGrad)"/>
+                                    </svg>
+                                </div>
+                                <div class="perf-labels">
+                                    <span data-i18n="month_jan">1月</span><span data-i18n="month_feb">2月</span><span data-i18n="month_mar">3月</span><span data-i18n="month_apr">4月</span><span data-i18n="month_may">5月</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 績效指標卡片 -->
+                        <div class="admin-card stat-mini-card">
+                            <p class="text-muted" data-i18n="perf_cum_return">累積報酬率</p>
+                            <div class="stat-big-value text-success">+28.4%</div>
+                        </div>
+                        <div class="admin-card stat-mini-card">
+                            <p class="text-muted" data-i18n="perf_win_rate">本月勝率</p>
+                            <div class="stat-big-value" style="color: var(--brand-primary-light);">86%</div>
+                        </div>
+                        <div class="admin-card stat-mini-card">
+                            <p class="text-muted" data-i18n="perf_mdd">最大回撤 (MDD)</p>
+                            <div class="stat-big-value" id="mddValue" style="color: #f87171;">0.00%</div>
+                            <div style="margin-top: 0.8rem;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color: var(--text-muted); margin-bottom:4px;">
+                                    <span data-i18n="perf_mdd_depth">回撤深度</span><span id="mddLabel">安全</span>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.08); border-radius: 99px; height: 6px; overflow:hidden;">
+                                    <div id="mddBar" style="height:100%; width:0%; background: linear-gradient(90deg, #f87171, #b91c1c); border-radius:99px; transition: width 0.6s ease;"></div>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.68rem; color: var(--text-muted); margin-top:3px;">
+                                    <span>0%</span><span>-25%</span><span>-50%+</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 風控參數設定 -->
+                        <div class="admin-card">
+                            <h3 data-i18n="risk_settings_title">⚙️ 風控參數設定</h3>
+                            <p class="text-muted" data-i18n="risk_settings_desc" style="margin-bottom:1.5rem;">調整您的倉位、止損與停利設定，機器人將在下一個循環套用新設定。</p>
+                            <form id="riskForm">
+                                <div class="form-group">
+                                    <label data-i18n="label_max_pos">單筆最大倉位 (%)</label>
+                                    <input type="number" id="maxPosition" value="5" min="1" max="100">
+                                </div>
+                                <div class="form-group">
+                                    <label data-i18n="label_stop_loss">停損比例 (%)</label>
+                                    <input type="number" id="stopLoss" value="2" min="0.1" max="50" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label data-i18n="label_take_profit">停利比例 (%)</label>
+                                    <input type="number" id="takeProfit" value="5" min="0.1" max="100" step="0.1">
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width:100%; padding:0.8rem;" data-i18n="btn_save_risk_settings">儲存風控設定</button>
+                            </form>
+                        </div>
+
+                        <!-- 交易日誌 -->
+                        <div class="admin-card">
+                            <h3 data-i18n="perf_recent_trades">📋 最近交易紀錄</h3>
+                            <table class="data-table" style="margin-top:1rem;">
+                                <thead><tr><th data-i18n="th_time">時間</th><th data-i18n="th_direction">方向</th><th data-i18n="th_result">結果</th></tr></thead>
+                                <tbody>
+                                    <tr><td class="text-muted">05/05 14:32</td><td><span style="color:#34d399;" data-i18n="direction_buy">▲ 買入</span></td><td style="color:#34d399;">+$120</td></tr>
+                                    <tr><td class="text-muted">05/05 09:15</td><td><span style="color:#f87171;" data-i18n="direction_sell">▼ 賣出</span></td><td style="color:#f87171;">-$40</td></tr>
+                                    <tr><td class="text-muted">05/04 22:01</td><td><span style="color:#34d399;" data-i18n="direction_buy">▲ 買入</span></td><td style="color:#34d399;">+$88</td></tr>
+                                    <tr><td class="text-muted">05/04 18:44</td><td><span style="color:#34d399;" data-i18n="direction_buy">▲ 買入</span></td><td style="color:#34d399;">+$205</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 面板三：VIP 會員中心 ===== -->
+                <div id="tab-vip" class="tab-panel">
+                    <div class="dashboard-grid">
+
+                        <!-- 會員等級 -->
+                        <div class="admin-card vip-level-card" style="grid-column: 1 / -1;">
+                            <div class="vip-badge">👑 STANDARD</div>
+                            <h3 style="margin-top:1rem;" data-i18n="vip_unlock_title">升級解鎖更多功能</h3>
+                            <p class="text-muted" data-i18n="vip_unlock_desc">進階版 (PRO) 解鎖 AI 自動優化策略，尊榮版 (VIP) 獲得專屬一對一顧問服務。</p>
+                            <div class="vip-tiers">
+                                <div class="tier-card tier-standard active-tier">
+                                    <div class="tier-name">STANDARD</div>
+                                    <div class="tier-price" data-i18n="vip_free">免費</div>
+                                    <ul>
+                                        <li data-i18n="vip_feature_basic_bots">✅ 基礎機器人</li>
+                                        <li data-i18n="vip_feature_1_exchange">✅ 1 組交易所</li>
+                                        <li data-i18n="vip_feature_no_ai">❌ AI 優化建議</li>
+                                    </ul>
+                                </div>
+                                <div class="tier-card tier-pro">
+                                    <div class="tier-name">PRO</div>
+                                    <div class="tier-price" data-i18n="vip_price_pro">$99 / 月</div>
+                                    <ul>
+                                        <li data-i18n="vip_feature_advanced_bots">✅ 進階機器人</li>
+                                        <li data-i18n="vip_feature_3_exchanges">✅ 3 組交易所</li>
+                                        <li data-i18n="vip_feature_ai">✅ AI 優化建議</li>
+                                    </ul>
+                                    <button class="btn btn-primary" style="margin-top:1rem; width:100%;" data-i18n="vip_btn_upgrade_pro">升級 PRO</button>
+                                </div>
+                                <div class="tier-card tier-vip">
+                                    <div class="tier-name" style="color:#fbbf24;">👑 VIP</div>
+                                    <div class="tier-price" style="color:#fbbf24;" data-i18n="vip_price_vip">$299 / 月</div>
+                                    <ul>
+                                        <li data-i18n="vip_feature_full_bots">✅ 全功能機器人</li>
+                                        <li data-i18n="vip_feature_unlimited_exchanges">✅ 無限交易所</li>
+                                        <li data-i18n="vip_feature_advisor">✅ 一對一顧問</li>
+                                    </ul>
+                                    <button class="btn" style="margin-top:1rem; width:100%; background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1a1a1a; font-weight: 700;" data-i18n="vip_btn_upgrade_vip">升級 VIP</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 邀請好友 -->
+                        <div class="admin-card">
+                            <h3 data-i18n="vip_invite_title">🎁 邀請好友</h3>
+                            <p class="text-muted" style="margin-bottom:1.5rem;" data-i18n="vip_invite_desc">每成功邀請一位好友完成註冊並啟動機器人，您將獲得 <strong style="color:var(--brand-primary-light);">30 天免費</strong> PRO 使用權！</p>
+                            <label data-i18n="vip_invite_label">您的專屬邀請連結</label>
+                            <div style="display: flex; gap: 10px; margin-top: 0.5rem;">
+                                <input type="text" id="inviteLink" readonly style="flex:1; background: rgba(10,15,24,0.5); border: 1px solid var(--border-color); padding: 0.7rem; border-radius: 8px; color: var(--text-muted); font-size: 0.85rem;" value="https://pgl.bot/ref/USER123">
+                                <button onclick="copyInviteLink()" class="btn btn-primary" data-i18n="vip_btn_copy">複製</button>
+                            </div>
+                            <p class="text-muted" style="margin-top: 1rem; font-size: 0.85rem;" data-i18n="vip_invite_stats">📊 已邀請：<strong>0</strong> 人 ｜ 已獲得：<strong>0</strong> 天獎勵</p>
+                        </div>
+
+                        <!-- AI 策略優化建議 -->
+                        <div class="admin-card">
+                            <h3 data-i18n="vip_ai_suggest_title">🤖 AI 策略優化建議</h3>
+                            <p class="text-muted" style="margin-bottom: 1.5rem;" data-i18n="vip_ai_suggest_desc">根據您過去 30 天的交易紀錄，AI 分析出以下優化方向：</p>
+                            <div class="ai-suggestion">
+                                <div class="ai-icon">🧠</div>
+                                <p data-i18n="vip_ai_suggest_p1">您的策略在<strong>亞洲盤</strong> (08:00–12:00 UTC+8) 的勝率高達 <strong style="color:#34d399;">91%</strong>，建議將主要交易時段集中於此，並降低歐美盤的倉位比例。</p>
+                            </div>
+                            <div class="ai-suggestion" style="margin-top: 1rem;">
+                                <div class="ai-icon">⚠️</div>
+                                <p data-i18n="vip_ai_suggest_p2">您的最大回撤發生在<strong>單日重大新聞事件</strong>期間，建議啟用「事件過濾」模式以規避非理性波動。</p>
+                                <p id="mddValueOverview" style="display:none;"></p>
+                                <p id="mddBarOverview" style="display:none;"></p>
+                                <p id="mddLabelOverview" style="display:none;"></p>
+                            </div>
+                            <button class="btn btn-secondary" style="width:100%; margin-top:1.5rem; opacity: 0.6; cursor: not-allowed;" data-i18n="vip_btn_unlock_ai">🔒 升級 PRO 以解鎖完整 AI 報告</button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ===== 面板四：歸因分析 ===== -->
+                <div id="tab-attribution" class="tab-panel">
+
+                    <!-- 摘要卡片 -->
+                    <div class="attr-summary-row">
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="stat_total_pnl">總盈虧</p>
+                            <div class="attr-stat-val" id="attr-total-pnl">$0.00</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="stat_total_trades">總交易筆數</p>
+                            <div class="attr-stat-val" id="attr-total-trades">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="attr_overall_win_rate">整體勝率</p>
+                            <div class="attr-stat-val" id="attr-win-rate">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="attr_best_strategy">最佳策略</p>
+                            <div class="attr-stat-val" style="color:#10b981;" id="attr-best-strategy">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="attr_best_asset">最佳商品類別</p>
+                            <div class="attr-stat-val" style="color:#818cf8;" id="attr-best-asset">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="attr_worst_mdd">最深 MDD</p>
+                            <div class="attr-stat-val" style="color:#f87171;" id="attr-worst-mdd">-</div>
+                        </div>
+                    </div>
+
+                    <!-- 瀑布圖 + 雷達圖 -->
+                    <div class="attr-chart-row">
+                        <div class="admin-card attr-chart-card">
+                            <h3 data-i18n="attr_waterfall_title">策略盈虧貢獻（瀑布圖）</h3>
+                            <p class="text-muted" data-i18n="attr_waterfall_desc" style="font-size:0.82rem;margin-bottom:1rem;">各策略對總盈虧的正/負貢獻</p>
+                            <div class="attr-chart-wrap" style="height:260px;">
+                                <canvas id="waterfallChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="admin-card attr-chart-card">
+                            <h3 data-i18n="attr_radar_title">🕸️ 策略多維度比較（雷達圖）</h3>
+                            <p class="text-muted" data-i18n="attr_radar_desc" style="font-size:0.82rem;margin-bottom:1rem;">勝率 / 報酬 / 頻率 / 風控 / 夏普</p>
+                            <div class="attr-chart-wrap" style="height:260px;">
+                                <canvas id="radarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 商品條形圖 + 時段條形圖 -->
+                    <div class="attr-chart-row">
+                        <div class="admin-card attr-chart-card">
+                            <h3 data-i18n="attr_asset_title">📊 各標的盈虧拆分</h3>
+                            <p class="text-muted" data-i18n="attr_asset_desc" style="font-size:0.82rem;margin-bottom:1rem;">指數 / 原料 各商品貢獻</p>
+                            <div class="attr-chart-wrap" style="height:240px;">
+                                <canvas id="assetChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="admin-card attr-chart-card">
+                            <h3 data-i18n="attr_session_title">🕐 時段盈虧比較</h3>
+                            <p class="text-muted" data-i18n="attr_session_desc" style="font-size:0.82rem;margin-bottom:1rem;">亞盤 / 歐盤 / 美盤 表現</p>
+                            <div class="attr-chart-wrap" style="height:240px;">
+                                <canvas id="sessionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 熱力圖 -->
+                    <div class="admin-card" style="margin-bottom:1.5rem;">
+                        <h3 data-i18n="attr_heatmap_title">🔥 時段熱力圖（週 × 時段）</h3>
+                        <p class="text-muted" data-i18n="attr_heatmap_desc" style="font-size:0.82rem;margin-bottom:1.2rem;">顏色越深代表盈虧絕對值越大，綠色獲利 / 紅色虧損</p>
+                        <div id="heatmapGrid"></div>
+                    </div>
+
+                    <!-- 交易明細 -->
+                    <div class="admin-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.8rem;margin-bottom:1.2rem;">
+                            <h3 style="margin:0;" data-i18n="attr_trade_details">📋 交易明細</h3>
+                            <div class="attr-filter-bar">
+                                <select id="filterStrategy" class="attr-filter-sel">
+                                    <option value="" data-i18n="filter_strategy_all">全部策略</option>
+                                    <option value="ma_cross" data-i18n="strategy_ma_cross">均線交叉</option>
+                                    <option value="trend_follow" data-i18n="strategy_trend_follow">趨勢追蹤</option>
+                                    <option value="pattern_prob" data-i18n="strategy_history_prob">歷史機率</option>
+                                </select>
+                                <select id="filterAsset" class="attr-filter-sel">
+                                    <option value="" data-i18n="filter_asset_all">全部商品</option>
+                                    <option value="index" data-i18n="asset_index">指數</option>
+                                    <option value="commodity" data-i18n="asset_commodity">原料</option>
+                                </select>
+                                <select id="filterSession" class="attr-filter-sel">
+                                    <option value="" data-i18n="filter_session_all">全部時段</option>
+                                    <option value="asia" data-i18n="session_asia">亞盤</option>
+                                    <option value="europe" data-i18n="session_europe">歐盤</option>
+                                    <option value="us" data-i18n="session_us">美盤</option>
+                                </select>
+                            </div>
+                        </div>
+                        <table class="data-table">
+                            <thead><tr>
+                                <th data-i18n="th_date">日期</th>
+                                <th data-i18n="th_strategy">策略</th>
+                                <th data-i18n="th_symbol">標的</th>
+                                <th data-i18n="th_direction">方向</th>
+                                <th data-i18n="th_session">時段</th>
+                                <th data-i18n="th_pnl">盈虧</th>
+                                <th data-i18n="th_close_date">平倉日</th>
+                            </tr></thead>
+                            <tbody id="attrTradeTableBody"><tr><td colspan="7" style="text-align:center;color:#556;" data-i18n="loading">載入中...</td></tr></tbody>
+                        </table>
+                    </div>
+
+                </div><!-- end tab-attribution -->
+
+                <!-- ===== 面板五：統一持倉總覽 ===== -->
+                <div id="tab-portfolio" class="tab-panel">
+
+                    <!-- 摘要卡片 -->
+                    <div class="attr-summary-row">
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="pf_total_aum_label">總資產規模 (AUM)</p>
+                            <div class="attr-stat-val" style="color:#818cf8;" id="pf-total-aum">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="pf_day_change_label">今日損益</p>
+                            <div class="attr-stat-val" id="pf-day-change">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="pf_asset_count_label">資產類別</p>
+                            <div class="attr-stat-val" id="pf-asset-count">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="pf_holding_count_label">持倉標的</p>
+                            <div class="attr-stat-val" id="pf-holding-count">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="pf_max_exposure_label">最大單一曝險</p>
+                            <div class="attr-stat-val" style="color:#f87171;font-size:1rem;" id="pf-max-exposure">-</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="pf_liquidity_label">可動用流動性</p>
+                            <div class="attr-stat-val" style="color:#10b981;" id="pf-liquidity">-</div>
+                        </div>
+                    </div>
+
+                    <!-- 資產配置 + 地理分布 -->
+                    <div class="attr-chart-row">
+                        <div class="admin-card attr-chart-card">
+                            <h3 data-i18n="pf_alloc_title">🥧 資產類別配置</h3>
+                            <p class="text-muted" data-i18n="pf_alloc_desc" style="font-size:0.82rem;margin-bottom:1rem;">股票 / 債券 / 不動產 / 商品 / 數位資產 / 現金</p>
+                            <div class="attr-chart-wrap" style="height:260px;">
+                                <canvas id="allocChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="admin-card attr-chart-card">
+                            <h3 data-i18n="pf_geo_title">🌍 地理分布</h3>
+                            <p class="text-muted" data-i18n="pf_geo_desc" style="font-size:0.82rem;margin-bottom:1rem;">北美 / 亞太 / 歐洲 / 數位全球</p>
+                            <div class="attr-chart-wrap" style="height:260px;">
+                                <canvas id="geoChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 幣別曝險 + 流動性階梯 -->
+                    <div class="attr-chart-row" style="margin-bottom:1.5rem;">
+                        <div class="admin-card attr-chart-card">
+                            <h3 data-i18n="pf_curr_title">💱 幣別曝險分布</h3>
+                            <p class="text-muted" data-i18n="pf_curr_desc" style="font-size:0.82rem;margin-bottom:1rem;">USD / NTD / BTC / JPY / EUR 敞口佔比</p>
+                            <div class="attr-chart-wrap" style="height:220px;">
+                                <canvas id="currencyChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="admin-card attr-chart-card">
+                            <h3 data-i18n="pf_liq_title">💧 流動性階梯</h3>
+                            <p class="text-muted" data-i18n="pf_liq_desc" style="font-size:0.82rem;margin-bottom:1.2rem;">各資產可動用時間分層</p>
+                            <div id="liquidityLadder"></div>
+                        </div>
+                    </div>
+
+                    <!-- 持倉明細 -->
+                    <div class="admin-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.8rem;margin-bottom:1.2rem;">
+                            <h3 style="margin:0;" data-i18n="pf_holding_details">📋 持倉明細</h3>
+                            <div style="display:flex;gap:0.8rem;align-items:center;flex-wrap:wrap;">
+                                <div class="attr-filter-bar">
+                                    <select id="pfFilterClass" class="attr-filter-sel">
+                                        <option value="" data-i18n="filter_class_all">全部類別</option>
+                                        <option value="equity" data-i18n="class_equity">股票</option>
+                                        <option value="bond" data-i18n="class_bond">債券</option>
+                                        <option value="realestate" data-i18n="class_realestate">不動產</option>
+                                        <option value="commodity" data-i18n="class_commodity">商品</option>
+                                        <option value="digital" data-i18n="class_digital">數位資產</option>
+                                        <option value="cash" data-i18n="class_cash">現金</option>
+                                    </select>
+                                    <select id="pfFilterRegion" class="attr-filter-sel">
+                                        <option value="" data-i18n="filter_region_all">全部地區</option>
+                                        <option value="北美" data-i18n="region_na">北美</option>
+                                        <option value="亞太" data-i18n="region_ap">亞太</option>
+                                        <option value="歐洲" data-i18n="region_eu">歐洲</option>
+                                        <option value="全球" data-i18n="region_global">全球</option>
+                                    </select>
+                                    <select id="pfFilterLiq" class="attr-filter-sel">
+                                        <option value="" data-i18n="filter_liq_all">全部流動性</option>
+                                        <option value="T+0" data-i18n="liq_t0">T+0 即日</option>
+                                        <option value="T+2" data-i18n="liq_t2">T+2 兩日</option>
+                                        <option value="30日" data-i18n="liq_30d">30 日內</option>
+                                        <option value="90日+" data-i18n="liq_90d">90 日以上</option>
+                                    </select>
+                                </div><!-- end attr-filter-bar -->
+                                <span id="quoteUpdateStatus" class="text-muted" style="font-size: 0.8rem; margin-right: 4px;"></span>
+                                <button id="refreshQuotesBtn" class="btn btn-success" style="padding:0.45rem 1.1rem;font-size:0.85rem;white-space:nowrap;display:flex;align-items:center;gap:6px;">
+                                    <span class="spinner" id="quoteSpinner" style="display:none;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></span>
+                                    <span>🔄 </span><span data-i18n="btn_refresh_quotes">更新報價</span>
+                                </button>
+                                <button id="exportReportBtn" class="btn btn-primary" style="padding:0.45rem 1.1rem;font-size:0.85rem;white-space:nowrap;" onclick="window.generateReport && window.generateReport()">
+                                    <span>📄 </span><span data-i18n="btn_export_pdf">匯出 PDF 報告</span>
+                                </button>
+                            </div><!-- end wrapper -->
+                        </div>
+                        <table class="data-table">
+                            <thead><tr>
+                                <th data-i18n="th_holding_target">標的</th>
+                                <th data-i18n="th_holding_class">類別</th>
+                                <th data-i18n="th_holding_region">地區</th>
+                                <th data-i18n="th_holding_currency">幣別</th>
+                                <th data-i18n="th_holding_price">現價</th>
+                                <th data-i18n="th_holding_value">市值 (USD)</th>
+                                <th data-i18n="th_holding_pct">佔比</th>
+                                <th data-i18n="th_holding_change">今日漲跌</th>
+                                <th data-i18n="th_holding_liq">流動性</th>
+                            </tr></thead>
+                            <tbody id="holdingsTableBody"><tr><td colspan="9" style="text-align:center;color:#556;" data-i18n="loading">載入中...</td></tr></tbody>
+                        </table>
+                    </div>
+
+                </div><!-- end tab-portfolio -->
+
+                <!-- ===== 面板六：風險儀錶板 ===== -->
+                <div id="tab-risk" class="tab-panel">
+
+                    <!-- 風險指標卡片 -->
+                    <div class="attr-summary-row">
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="risk_volatility_label">年化波動度 (Volatility)</p>
+                            <div class="attr-stat-val" style="color:#fbbf24;" id="risk-volatility">12.45%</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="risk_sharpe_label">夏普比率 (Sharpe Ratio)</p>
+                            <div class="attr-stat-val" style="color:#34d399;" id="risk-sharpe">1.85</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="risk_sortino_label">索提諾比率 (Sortino)</p>
+                            <div class="attr-stat-val" style="color:#10b981;" id="risk-sortino">2.12</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="risk_var_label">風險價值 (95% 1-Day VaR)</p>
+                            <div class="attr-stat-val" style="color:#f87171;" id="risk-var">-$32,450</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="risk_beta_label">系統性風險 (Beta)</p>
+                            <div class="attr-stat-val" style="color:#818cf8;" id="risk-beta">0.82</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="risk_limit_label">淨值回撤限制 (Limit)</p>
+                            <div class="attr-stat-val" style="color:#f87171;" id="risk-limit">-15.00%</div>
+                        </div>
+                    </div>
+
+                    <!-- 壓力測試 + 集中度風險 -->
+                    <div class="attr-chart-row">
+                        <!-- 壓力測試 -->
+                        <div class="admin-card attr-chart-card" style="flex: 1.2;">
+                            <h3 data-i18n="risk_stress_title">⚡ 壓力測試與情境模擬 (Stress Testing)</h3>
+                            <p class="text-muted" data-i18n="risk_stress_desc" style="font-size:0.82rem;margin-bottom:1rem;">模擬歷史重大極端市場情境下，當前投資組合的預估衝擊與損益</p>
+                            <table class="data-table" style="font-size: 0.9rem;">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="th_scenario_name">情境名稱</th>
+                                        <th data-i18n="th_simulated_shock">模擬衝擊</th>
+                                        <th data-i18n="th_pnl_impact">預估損益影響</th>
+                                        <th data-i18n="th_post_shock_aum">預估衝擊後市值 (AUM)</th>
+                                        <th data-i18n="th_risk_status">風險狀態</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stressTestTableBody">
+                                    <!-- 經由 JS 動態產生 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 集中度風險與限制警示 -->
+                        <div class="admin-card attr-chart-card" style="flex: 0.8;">
+                            <h3 data-i18n="risk_concentration_title">⚠️ 投資集中度與風控限制</h3>
+                            <p class="text-muted" data-i18n="risk_concentration_desc" style="font-size:0.82rem;margin-bottom:1rem;">家族辦公室自訂的各資產曝險上限警示監控</p>
+                            <div class="risk-alerts-container" id="riskAlertsList">
+                                <!-- 經由 JS 動態產生 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 資產相關性熱力圖 + 數位資產特定風險 -->
+                    <div class="attr-chart-row" style="margin-bottom: 1.5rem;">
+                        <!-- 相關性熱力圖 -->
+                        <div class="admin-card attr-chart-card" style="flex: 1;">
+                            <h3 data-i18n="risk_correlation_title">🔥 資產類別相關性熱力圖 (Correlation Matrix)</h3>
+                            <p class="text-muted" data-i18n="risk_correlation_desc" style="font-size:0.82rem;margin-bottom:1rem;">各資產大類之間的歷史相關係數（-1.0 ~ +1.0），數值越接近 1.0 相關性越高</p>
+                            <div class="correlation-heatmap-wrapper">
+                                <div id="correlationHeatmap"></div>
+                            </div>
+                        </div>
+
+                        <!-- 數位資產特定風險與保管 -->
+                        <div class="admin-card attr-chart-card" style="flex: 1;">
+                            <h3 data-i18n="risk_security_title">🔑 數位資產託管與安全性指標</h3>
+                            <p class="text-muted" data-i18n="risk_security_desc" style="font-size:0.82rem;margin-bottom:1.2rem;">針對高波動數位資產的冷/熱錢包分佈與協議風險管理</p>
+                            
+                            <!-- 錢包保管比例 -->
+                            <div style="margin-bottom: 1.5rem;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom: 6px;">
+                                    <span data-i18n="risk_custody_title">🛡️ 安全託管分佈 (錢包類型)</span>
+                                    <span data-i18n="risk_custody_ratio_val">冷錢包 70% / 交易所 30%</span>
+                                </div>
+                                <div class="custody-progress-bar">
+                                    <div class="custody-fill-cold" style="width: 70%;"></div>
+                                    <div class="custody-fill-exchange" style="width: 30%;"></div>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top: 4px;">
+                                    <span data-i18n="risk_cold_storage">冷錢包冷儲存 (安全)</span>
+                                    <span data-i18n="risk_exchange_custody">交易所託管 (高流動性/合約中)</span>
+                                </div>
+                            </div>
+
+                            <!-- 數位資產協議曝險級別 -->
+                            <div class="security-list">
+                                <div class="security-item">
+                                    <span class="security-label" data-i18n="risk_defi_exposure_label">智能合約曝險等級 (DeFi):</span>
+                                    <span class="security-badge badge-green" data-i18n="risk_defi_exposure_val">L1 低風險 (僅 Aave/Uniswap)</span>
+                                </div>
+                                <div class="security-item">
+                                    <span class="security-label" data-i18n="risk_stablecoin_stress_label">穩定幣脫鉤壓力測試 (Stablecoin Stress):</span>
+                                    <span class="security-badge badge-green" data-i18n="risk_stablecoin_stress_val">通過 (USD/USDT 佔比合規)</span>
+                                </div>
+                                <div class="security-item">
+                                    <span class="security-label" data-i18n="risk_exchange_liq_label">交易所流動性風險評級:</span>
+                                    <span class="security-badge badge-yellow" data-i18n="risk_exchange_liq_val">中等 (Binance 託管額度限制)</span>
+                                </div>
+                                <div class="security-item">
+                                    <span class="security-label" data-i18n="risk_kyc_aml_label">合規與防洗錢審查 (KYC/AML):</span>
+                                    <span class="security-badge badge-green" data-i18n="risk_kyc_aml_val">100% 已認證</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- end tab-risk -->
+
+                <!-- ===== 面板七：數位資產管理 ===== -->
+                <div id="tab-digital" class="tab-panel">
+
+                    <!-- 數位資產摘要卡片 -->
+                    <div class="attr-summary-row">
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="digital_total_aum_label">數位資產總規模 (Crypto AUM)</p>
+                            <div class="attr-stat-val" style="color:#a78bfa;" id="dig-total-aum">$513,600</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="digital_day_change_label">今日波動損益 (24h Change)</p>
+                            <div class="attr-stat-val" id="dig-day-change">+$12,480 (+2.49%)</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="digital_staked_ratio_label">質押/挖礦佔比 (Staked Ratio)</p>
+                            <div class="attr-stat-val" style="color:#34d399;" id="dig-staked-ratio">42.8%</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="digital_wallet_count_label">錢包帳戶數 (Connected Wallets)</p>
+                            <div class="attr-stat-val" id="dig-wallet-count">4 個</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="digital_custody_cold_label">實體託管佔比 (Cold Custody)</p>
+                            <div class="attr-stat-val" style="color:#10b981;" id="dig-custody-cold">70%</div>
+                        </div>
+                        <div class="admin-card attr-stat-card">
+                            <p class="text-muted" data-i18n="digital_gas_price_label">即時 Gas 燃料費 (ETH)</p>
+                            <div class="attr-stat-val" style="color:#f59e0b;" id="dig-gas-price">28 Gwei</div>
+                        </div>
+                    </div>
+
+                    <!-- 即時 Gas 監控 & 錢包管理 -->
+                    <div class="attr-chart-row">
+                        <!-- 錢包地址管理與餘額 -->
+                        <div class="admin-card attr-chart-card" style="flex: 1.2;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; flex-wrap:wrap; gap:0.5rem;">
+                                <h3 style="margin:0;" data-i18n="digital_wallets_title">👛 鏈上錢包地址管理</h3>
+                                <button class="btn btn-primary" style="padding:0.4rem 0.9rem; font-size:0.8rem;" id="connectWalletBtn" data-i18n="digital_btn_connect_wallet">
+                                    🔗 連結新錢包
+                                </button>
+                            </div>
+                            <table class="data-table" style="font-size: 0.88rem;">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="th_wallet_name">錢包名稱</th>
+                                        <th data-i18n="th_wallet_chain">公鏈網路</th>
+                                        <th data-i18n="th_wallet_type">託管類型</th>
+                                        <th data-i18n="th_wallet_address">錢包地址</th>
+                                        <th data-i18n="th_wallet_balance">即時餘額</th>
+                                        <th data-i18n="th_wallet_value">估值 (USD)</th>
+                                        <th data-i18n="th_wallet_actions">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="digWalletsTableBody">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 即時 Gas Fee 儀表 -->
+                        <div class="admin-card attr-chart-card" style="flex: 0.8;">
+                            <h3 data-i18n="digital_gas_title">⛽ 即時多鏈 Gas 燃料費監控</h3>
+                            <p class="text-muted" data-i18n="digital_gas_desc" style="font-size:0.82rem;margin-bottom:1.2rem;">實時監控各公鏈交易燃料成本，優化家族辦公室大額調撥時機</p>
+                            
+                            <div class="gas-trackers-list">
+                                <div class="gas-tracker-item">
+                                    <div class="gas-tracker-header">
+                                        <span class="chain-badge badge-eth">Ethereum Mainnet</span>
+                                        <span class="gas-value" id="gas-eth-val">28 Gwei</span>
+                                    </div>
+                                    <div class="gas-speed-row">
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_fast">🚀 極速</span>: <strong id="gas-eth-fast">32</strong></div>
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_normal">🚗 一般</span>: <strong id="gas-eth-normal">28</strong></div>
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_slow">🐢 緩慢</span>: <strong id="gas-eth-slow">22</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="gas-tracker-item" style="margin-top:1rem;">
+                                    <div class="gas-tracker-header">
+                                        <span class="chain-badge badge-sol">Solana Network</span>
+                                        <span class="gas-value" id="gas-sol-val">0.00005 SOL</span>
+                                    </div>
+                                    <div class="gas-speed-row">
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_priority">🚀 優先</span>: <strong>0.0001</strong></div>
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_regular">🚗 正常</span>: <strong>0.00005</strong></div>
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_cheap">🐢 便宜</span>: <strong>0.00001</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="gas-tracker-item" style="margin-top:1rem;">
+                                    <div class="gas-tracker-header">
+                                        <span class="chain-badge badge-arb">Arbitrum One</span>
+                                        <span class="gas-value" id="gas-arb-val">0.15 Gwei</span>
+                                    </div>
+                                    <div class="gas-speed-row">
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_fast">🚀 極速</span>: <strong>0.18</strong></div>
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_normal">🚗 一般</span>: <strong>0.15</strong></div>
+                                        <div class="gas-speed-col"><span data-i18n="gas_speed_slow">🐢 緩慢</span>: <strong>0.11</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DeFi 質押收益 & 交易歷史 -->
+                    <div class="attr-chart-row" style="margin-bottom:1.5rem;">
+                        <!-- DeFi Staking & Yields -->
+                        <div class="admin-card attr-chart-card" style="flex: 1;">
+                            <h3 data-i18n="digital_defi_title">🌾 DeFi 智能合約質押與流動性池 (Yield Farming)</h3>
+                            <p class="text-muted" data-i18n="digital_defi_desc" style="font-size:0.82rem;margin-bottom:1rem;">動態監控智能合約中的鎖倉資產 APY 與累積未領取收益</p>
+                            <table class="data-table" style="font-size: 0.88rem;">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="th_defi_protocol">質押協議</th>
+                                        <th data-i18n="th_defi_asset">投入資產</th>
+                                        <th data-i18n="th_defi_amount">鎖倉數量</th>
+                                        <th data-i18n="th_defi_apy">即時 APY</th>
+                                        <th data-i18n="th_defi_lockup">解鎖週期</th>
+                                        <th data-i18n="th_defi_earned">未領取利息 (USD)</th>
+                                        <th data-i18n="th_defi_risk">合約風險</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="digDefiTableBody">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Recent On-chain Tx Log -->
+                        <div class="admin-card attr-chart-card" style="flex: 1;">
+                            <h3 data-i18n="digital_tx_title">📝 近期鏈上大額交易日誌</h3>
+                            <p class="text-muted" data-i18n="digital_tx_desc" style="font-size:0.82rem;margin-bottom:1rem;">實時監控多鏈多地址下的資金流出入、質押與 Swap 操作</p>
+                            <table class="data-table" style="font-size: 0.86rem;">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="th_tx_hash">交易 Hash</th>
+                                        <th data-i18n="th_tx_chain">公鏈</th>
+                                        <th data-i18n="th_tx_type">操作類型</th>
+                                        <th data-i18n="th_tx_value">交易金額</th>
+                                        <th data-i18n="th_tx_status">區塊狀態</th>
+                                        <th data-i18n="th_tx_time">交易時間</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="digTxTableBody">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 連結錢包彈出式對話框 (Modal) -->
+                    <div id="connectWalletModal" class="modal-overlay" style="display:none;">
+                        <div class="modal-box" style="max-width: 480px;">
+                            <div class="modal-header">
+                                <h3 data-i18n="wallet_modal_title">🔗 連結新數位資產錢包</h3>
+                                <button class="modal-close" id="closeWalletModalBtn">&times;</button>
+                            </div>
+                            <form id="connectWalletForm" class="modal-body" style="padding: 0 0 1rem 0;">
+                                <div class="form-group">
+                                    <label for="walletName" data-i18n="label_wallet_name">錢包自訂名稱</label>
+                                    <input type="text" id="walletName" required data-i18n-placeholder="placeholder_wallet_name" placeholder="例如: Ledger-Cold-03">
+                                </div>
+                                <div class="form-group">
+                                    <label for="walletChain" data-i18n="label_wallet_chain">選擇公鏈網路</label>
+                                    <select id="walletChain" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(10,15,24,0.5); border: 1px solid var(--border-color); color: white;">
+                                        <option value="Ethereum" data-i18n="chain_eth">Ethereum (EVM)</option>
+                                        <option value="Bitcoin" data-i18n="chain_btc">Bitcoin Network</option>
+                                        <option value="Solana" data-i18n="chain_sol">Solana Network</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="walletType" data-i18n="label_wallet_type">託管類型</label>
+                                    <select id="walletType" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(10,15,24,0.5); border: 1px solid var(--border-color); color: white;">
+                                        <option value="硬體冷錢包" data-i18n="type_cold">硬體冷錢包 (Ledger/Trezor)</option>
+                                        <option value="機構託管" data-i18n="type_custody">機構多重簽名 (Gnosis Safe / Fireblocks)</option>
+                                        <option value="熱錢包" data-i18n="type_hot">熱錢包 (Metamask/Phantom)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="walletAddress" data-i18n="label_wallet_address">錢包公鑰地址</label>
+                                    <input type="text" id="walletAddress" required data-i18n-placeholder="placeholder_wallet_address" placeholder="請輸入 0x... 或 Sol... 地址">
+                                </div>
+                                <div class="form-group">
+                                    <label for="walletBalance" data-i18n="label_wallet_balance">初始模擬餘額數量</label>
+                                    <input type="number" id="walletBalance" required data-i18n-placeholder="placeholder_wallet_balance" placeholder="例如: 10.5 (ETH/BTC/SOL)" step="0.0001" min="0" style="width:100%; padding:0.8rem; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white;">
+                                </div>
+                                <button type="submit" class="btn btn-success" style="width: 100%; padding: 0.8rem; margin-top: 1rem;" data-i18n="btn_save_wallet">💾 儲存並同步鏈上餘額</button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div><!-- end tab-digital -->
+
+            </div><!-- end admin-content -->
+        </main>
+    </div>
+
+    <script src="i18n.js?v=7"></script>
+    <script src="dashboard.js?v=7"></script>
+    <script src="bots.js?v=7"></script>
+    <script src="attribution.js?v=7"></script>
+    <script src="portfolio.js?v=7"></script>
+    <script src="risk.js?v=7"></script>
+    <script src="digital.js?v=7"></script>
+    <script src="report.js?v=7"></script>
+</body>
+</html>

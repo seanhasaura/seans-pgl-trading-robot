@@ -1,0 +1,372 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <script src="mock-api.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PGL 後台管理系統 — 註冊者管理</title>
+    <meta name="description" content="PGL Trading Bot 後台管理系統，提供完整的使用者管理、角色授權與功能權限控制。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="admin-users.css?v=7">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+    <!-- ══ 側邊欄 ══════════════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="PGL Logo" class="logo-img">
+            <span class="logo-text">PGL Admin</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="#" class="active" id="nav-users">👥 註冊者管理</a></li>
+            <li><a href="companies.html">🏢 公司管理</a></li>
+            <li><a href="dashboard.html">📊 交易數據分析</a></li>
+            <li><a href="settings.html">⚙️ 系統設定</a></li>
+            <li><a href="index.html">🏠 返回首頁</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="admin-badge">
+                <span class="badge-dot"></span>
+                <span>系統運作中</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ══ 主區塊 ════════════════════════════════════════════════════════ -->
+    <main class="admin-main">
+
+        <!-- 頂部工具列 -->
+        <header class="admin-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+                <h2 class="page-title">👥 註冊者管理</h2>
+            </div>
+            <div class="admin-user-info">
+                <div class="notification-bell" id="notifBell" title="待審核通知">
+                    🔔 <span class="notif-count" id="notifCount">0</span>
+                </div>
+                <span class="admin-name">Admin</span>
+                <div class="avatar" title="管理員">A</div>
+            </div>
+        </header>
+
+        <div class="admin-content">
+
+            <!-- ── 統計卡片列 ────────────────────────────────────────── -->
+            <section class="stats-row" id="statsRow">
+                <div class="stat-chip" id="statTotal">
+                    <span class="stat-chip-icon">👤</span>
+                    <div>
+                        <div class="stat-chip-val" id="statTotalVal">—</div>
+                        <div class="stat-chip-label">總會員數</div>
+                    </div>
+                </div>
+                <div class="stat-chip pending-chip" id="statPending">
+                    <span class="stat-chip-icon">⏳</span>
+                    <div>
+                        <div class="stat-chip-val" id="statPendingVal">—</div>
+                        <div class="stat-chip-label">待審核</div>
+                    </div>
+                </div>
+                <div class="stat-chip approved-chip">
+                    <span class="stat-chip-icon">✅</span>
+                    <div>
+                        <div class="stat-chip-val" id="statApprovedVal">—</div>
+                        <div class="stat-chip-label">已開通</div>
+                    </div>
+                </div>
+                <div class="stat-chip vip-chip">
+                    <span class="stat-chip-icon">⭐</span>
+                    <div>
+                        <div class="stat-chip-val" id="statVipVal">—</div>
+                        <div class="stat-chip-label">VIP 會員</div>
+                    </div>
+                </div>
+                <div class="stat-chip admin-chip">
+                    <span class="stat-chip-icon">🔑</span>
+                    <div>
+                        <div class="stat-chip-val" id="statAdminVal">—</div>
+                        <div class="stat-chip-label">管理員</div>
+                    </div>
+                </div>
+                <div class="stat-chip aum-chip">
+                    <span class="stat-chip-icon">💰</span>
+                    <div>
+                        <div class="stat-chip-val" id="statAumVal">—</div>
+                        <div class="stat-chip-label">平台 AUM</div>
+                    </div>
+                </div>
+                <div class="stat-chip bot-chip">
+                    <span class="stat-chip-icon">🤖</span>
+                    <div>
+                        <div class="stat-chip-val" id="statBotVal">—</div>
+                        <div class="stat-chip-label">活躍機器人</div>
+                    </div>
+                </div>
+                <div class="stat-chip alert-chip" id="alertChip">
+                    <span class="stat-chip-icon">⚠️</span>
+                    <div>
+                        <div class="stat-chip-val" id="statAlertVal">—</div>
+                        <div class="stat-chip-label">異常警示</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── 工具列 ────────────────────────────────────────────── -->
+            <section class="toolbar admin-card">
+                <div class="toolbar-left">
+                    <div class="search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" class="search-input" placeholder="搜尋姓名 / 信箱…" autocomplete="off">
+                    </div>
+                    <select id="filterStatus" class="filter-select">
+                        <option value="">全部狀態</option>
+                        <option value="pending">待審核</option>
+                        <option value="approved">已開通</option>
+                    </select>
+                    <select id="filterCompany" class="filter-select">
+                        <option value="">全部公司</option>
+                        <option value="__none__">未指派公司</option>
+                    </select>
+                    <select id="filterRole" class="filter-select">
+                        <option value="">全部角色</option>
+                        <option value="admin">管理員</option>
+                        <option value="vip">VIP</option>
+                        <option value="member">一般會員</option>
+                        <option value="trial">試用</option>
+                        <option value="disabled">停用</option>
+                    </select>
+                    <button id="refreshBtn" class="btn btn-secondary btn-sm" title="重新整理">🔄 重新整理</button>
+                </div>
+                <div class="toolbar-right">
+                    <button id="bulkApproveBtn" class="btn btn-success btn-sm bulk-btn" disabled>✅ 批次核准</button>
+                    <button id="bulkRoleBtn" class="btn btn-secondary btn-sm bulk-btn" disabled>🔖 批次設定角色</button>
+                    <button id="bulkRejectBtn" class="btn btn-danger btn-sm bulk-btn" disabled>🗑️ 批次刪除</button>
+                    <button id="exportCsvBtn" class="btn btn-secondary btn-sm">📥 匯出 CSV</button>
+                </div>
+            </section>
+
+            <!-- ── 已選取提示列 ────────────────────────────────────────── -->
+            <div class="selection-bar" id="selectionBar" style="display:none;">
+                <span id="selectionCount">已選 0 位使用者</span>
+                <button class="btn btn-sm btn-secondary" id="deselectAllBtn">取消全選</button>
+            </div>
+
+            <!-- ── 使用者資料表 ────────────────────────────────────────── -->
+            <div class="admin-card table-card">
+                <div class="card-header">
+                    <h3>會員名單</h3>
+                    <div class="card-header-right">
+                        <span class="result-count" id="resultCount">載入中…</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table" id="userTable">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"><input type="checkbox" id="selectAll" title="全選"></th>
+                                <th>ID</th>
+                                <th>姓名</th>
+                                <th>Email</th>
+                                <th>公司</th>
+                                <th>角色</th>
+                                <th>VIP</th>
+                                <th>狀態</th>
+                                <th>註冊時間</th>
+                                <th style="min-width:260px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="empty-state" style="display:none;">
+                    <div class="empty-icon">🔍</div>
+                    <p>找不到符合條件的使用者</p>
+                </div>
+                <div id="loadingState" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>載入中…</p>
+                </div>
+            </div>
+
+            <!-- ── 異常警示面板 ────────────────────────────────────────── -->
+            <div class="admin-card" id="alertsPanel" style="margin-top: 1.5rem;">
+                <div class="card-header">
+                    <h3>⚠️ 異常交易警示</h3>
+                    <span class="result-count" id="alertsUpdated">即時監控中…</span>
+                </div>
+                <div id="alertsList">
+                    <div class="alert-item alert-warning">
+                        <span class="alert-icon">🔶</span>
+                        <div class="alert-info">
+                            <strong>大額單筆交易警示</strong>
+                            <span class="text-muted">user@example.com 於 TradeStation 下單金額超過 $50,000</span>
+                        </div>
+                        <span class="alert-time text-muted">剛剛</span>
+                    </div>
+                    <div class="alert-item alert-danger">
+                        <span class="alert-icon">🔴</span>
+                        <div class="alert-info">
+                            <strong>連續虧損警示</strong>
+                            <span class="text-muted">test@gmail.com 機器人連續虧損 5 筆，已自動暫停</span>
+                        </div>
+                        <span class="alert-time text-muted">5 分鐘前</span>
+                    </div>
+                    <div class="alert-item alert-info">
+                        <span class="alert-icon">🔵</span>
+                        <div class="alert-info">
+                            <strong>新 API Key 綁定</strong>
+                            <span class="text-muted">新會員完成 FXCM API 綁定，等待首次啟動</span>
+                        </div>
+                        <span class="alert-time text-muted">12 分鐘前</span>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<!-- ══ 彈窗：使用者詳情 & 權限管理 ═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitle">使用者詳情</h3>
+            <button class="modal-close" id="modalClose" aria-label="關閉">✕</button>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- 使用者基本資訊 -->
+            <div class="modal-user-info" id="modalUserInfo"></div>
+
+            <!-- 標籤頁 -->
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tab="perms">🔐 功能權限</button>
+                <button class="modal-tab" data-tab="role">🎖️ 角色設定</button>
+                <button class="modal-tab" data-tab="vip">⭐ VIP 等級</button>
+                <button class="modal-tab" data-tab="shares">👥 共用帳戶</button>
+                <button class="modal-tab" data-tab="note">📝 備註</button>
+            </div>
+
+            <!-- 功能權限面板 -->
+            <div class="modal-tab-panel active" id="tab-perms">
+                <p class="tab-desc">勾選該使用者可使用的功能模組。</p>
+                <div class="perms-grid" id="permsGrid"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary btn-sm" id="resetPermBtn">↩ 依角色重設</button>
+                    <button class="btn btn-primary" id="savePermsBtn">💾 儲存權限</button>
+                </div>
+            </div>
+
+            <!-- 角色設定面板 -->
+            <div class="modal-tab-panel" id="tab-role">
+                <p class="tab-desc">設定角色後，系統將自動套用該角色的預設權限。</p>
+                <div class="role-grid" id="roleGrid">
+                    <label class="role-card" data-role="admin"><input type="radio" name="roleSelect" value="admin"><span class="role-icon">🔑</span><span class="role-name">管理員</span><span class="role-desc">擁有全部權限</span></label>
+                    <label class="role-card" data-role="vip"><input type="radio" name="roleSelect" value="vip"><span class="role-icon">⭐</span><span class="role-name">VIP</span><span class="role-desc">進階功能 + 匯出</span></label>
+                    <label class="role-card" data-role="member"><input type="radio" name="roleSelect" value="member"><span class="role-icon">👤</span><span class="role-name">一般會員</span><span class="role-desc">基本交易功能</span></label>
+                    <label class="role-card" data-role="trial"><input type="radio" name="roleSelect" value="trial"><span class="role-icon">🔓</span><span class="role-name">試用</span><span class="role-desc">僅檢視儀表板</span></label>
+                    <label class="role-card" data-role="disabled"><input type="radio" name="roleSelect" value="disabled"><span class="role-icon">🚫</span><span class="role-name">停用</span><span class="role-desc">無任何功能權限</span></label>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" id="saveRoleBtn">💾 儲存角色</button>
+                </div>
+            </div>
+
+            <!-- VIP 等級面板 -->
+            <div class="modal-tab-panel" id="tab-vip">
+                <p class="tab-desc">調整 VIP 等級，影響費率折扣與進階功能開放。</p>
+                <div class="vip-select-grid" id="vipGrid">
+                    <label class="vip-option" data-vip="0"><input type="radio" name="vipSelect" value="0"><div class="vip-opt-icon">👤</div><div class="vip-opt-name">一般 (Lv0)</div><div class="vip-opt-desc">無折扣</div></label>
+                    <label class="vip-option" data-vip="1"><input type="radio" name="vipSelect" value="1"><div class="vip-opt-icon">🥉</div><div class="vip-opt-name">銀牌 (Lv1)</div><div class="vip-opt-desc">手續費 -10%</div></label>
+                    <label class="vip-option" data-vip="2"><input type="radio" name="vipSelect" value="2"><div class="vip-opt-icon">🥇</div><div class="vip-opt-name">金牌 (Lv2)</div><div class="vip-opt-desc">手續費 -25%</div></label>
+                    <label class="vip-option" data-vip="3"><input type="radio" name="vipSelect" value="3"><div class="vip-opt-icon">💎</div><div class="vip-opt-name">鑽石 (Lv3)</div><div class="vip-opt-desc">手續費 -40% + 專屬策略</div></label>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" id="saveVipBtn">💾 儲存 VIP 等級</button>
+                </div>
+            </div>
+
+            <!-- 共用帳戶面板 -->
+            <div class="modal-tab-panel" id="tab-shares">
+                <p class="tab-desc">管理該使用者可以授權給哪些人共用其交易帳戶。</p>
+                <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+                    <input type="email" id="shareMemberEmail" placeholder="輸入被授權者的 Email" style="flex:1; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: white;">
+                    <select id="shareAccessRole" style="padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: white;">
+                        <option value="viewer">觀看者</option>
+                        <option value="operator">操作者</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" id="addShareBtn">➕ 新增</button>
+                </div>
+                <table class="admin-table" style="font-size: 0.85rem;">
+                    <thead><tr><th>被授權帳號 (Email)</th><th>角色</th><th>授權時間</th><th>操作</th></tr></thead>
+                    <tbody id="sharesTableBody"><tr><td colspan="4" style="text-align:center;">載入中...</td></tr></tbody>
+                </table>
+            </div>
+
+            <!-- 備註面板 -->
+            <div class="modal-tab-panel" id="tab-note">
+                <p class="tab-desc">管理員備註（僅後台可見）。</p>
+                <textarea id="noteTextarea" class="note-textarea" placeholder="在此輸入備註…" rows="5"></textarea>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" id="saveNoteBtn">💾 儲存備註</button>
+                </div>
+            </div>
+
+        </div><!-- /modal-body -->
+    </div>
+</div>
+
+<!-- ══ 批次設定角色 彈窗 ═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="bulkRoleModal">
+    <div class="modal-box modal-sm">
+        <div class="modal-header">
+            <h3>批次設定角色</h3>
+            <button class="modal-close" id="bulkRoleClose">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom:1rem;color:var(--text-muted);">選擇要套用至所有已選使用者的角色：</p>
+            <select id="bulkRoleSelect" class="filter-select" style="width:100%;margin-bottom:1.5rem;">
+                <option value="member">一般會員</option>
+                <option value="vip">VIP</option>
+                <option value="trial">試用</option>
+                <option value="admin">管理員</option>
+                <option value="disabled">停用</option>
+            </select>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="bulkRoleCancelBtn">取消</button>
+                <button class="btn btn-primary" id="bulkRoleConfirmBtn">確認套用</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Toast 提示 ═════════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══ 自訂確認彈窗 ═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box modal-sm">
+        <div class="modal-header">
+            <h3 id="confirmTitle">確認操作</h3>
+            <button class="modal-close" id="confirmCloseBtn">✕</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirmMessage" style="margin-bottom:1.5rem;color:var(--text-muted);"></p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="confirmCancelBtn">取消</button>
+                <button class="btn btn-danger" id="confirmOkBtn">確認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="admin.js?v=7"></script>
+</body>
+</html>

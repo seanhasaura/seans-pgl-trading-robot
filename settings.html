@@ -1,0 +1,392 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <script src="mock-api.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系統設定 — PGL Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="admin-users.css?v=7">
+    <style>
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .settings-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.9rem 0;
+            border-bottom: 1px solid rgba(103,139,145,0.08);
+        }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-label { font-size: 0.95rem; font-weight: 500; }
+        .setting-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        /* Toggle Switch */
+        .toggle { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+            border-radius: 26px; cursor: pointer; transition: 0.3s;
+        }
+        .toggle-slider:before {
+            content: ''; position: absolute; height: 18px; width: 18px;
+            left: 4px; bottom: 4px; background: white;
+            border-radius: 50%; transition: 0.3s;
+        }
+        .toggle input:checked + .toggle-slider { background: var(--brand-primary); }
+        .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+        /* Platform Stats */
+        .platform-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .platform-stat { background: rgba(10,15,24,0.4); border-radius: 10px; padding: 1rem; text-align: center; border: 1px solid var(--border-color); }
+        .platform-stat-val { font-size: 1.6rem; font-weight: 800; color: var(--brand-primary-light); }
+        .platform-stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+        /* Status dot */
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .dot-green { background: #10b981; box-shadow: 0 0 6px #10b981; }
+        .dot-red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        /* Full width card */
+        .full-col { grid-column: 1 / -1; }
+    </style>
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+    <!-- 側邊欄 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="PGL Logo" class="logo-img">
+            <span class="logo-text">PGL Admin</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="admin.html">👥 註冊者管理</a></li>
+            <li><a href="companies.html">🏢 公司管理</a></li>
+            <li><a href="dashboard.html">📊 交易數據分析</a></li>
+            <li><a href="settings.html" class="active">⚙️ 系統設定</a></li>
+            <li><a href="index.html">🏠 返回首頁</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="admin-badge">
+                <span class="badge-dot"></span>
+                <span>系統運作中</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主區塊 -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+                <h2 class="page-title">⚙️ 系統設定</h2>
+            </div>
+            <div class="admin-user-info">
+                <span class="admin-name">Admin</span>
+                <div class="avatar">A</div>
+            </div>
+        </header>
+
+        <div class="admin-content">
+
+            <!-- 系統狀態總覽 -->
+            <div class="admin-card full-col" style="margin-bottom: 1.5rem;">
+                <p class="settings-section-title">🖥️ 系統狀態總覽</p>
+                <div class="platform-stats">
+                    <div class="platform-stat">
+                        <div class="platform-stat-val" id="sysUptime">—</div>
+                        <div class="platform-stat-label">伺服器運行時間</div>
+                    </div>
+                    <div class="platform-stat">
+                        <div class="platform-stat-val" id="sysVersion">v1.0.0</div>
+                        <div class="platform-stat-label">系統版本</div>
+                    </div>
+                    <div class="platform-stat">
+                        <div class="platform-stat-val" id="sysDb">SQLite</div>
+                        <div class="platform-stat-label">資料庫類型</div>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label"><span class="status-dot dot-green"></span>FastAPI 後端伺服器</div>
+                        <div class="setting-desc">http://127.0.0.1:8000 — 正常運行中</div>
+                    </div>
+                    <span class="badge badge-approved">● 上線</span>
+                </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label"><span class="status-dot dot-green"></span>SQLite 資料庫</div>
+                        <div class="setting-desc">pgl_database.db — 連線正常</div>
+                    </div>
+                    <span class="badge badge-approved">● 正常</span>
+                </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label"><span class="status-dot dot-yellow"></span>Google OAuth</div>
+                        <div class="setting-desc">目前為模擬模式，尚未串接真實 Google API</div>
+                    </div>
+                    <span class="badge badge-pending">⚠ 模擬中</span>
+                </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label"><span class="status-dot dot-red"></span>Email 通知系統</div>
+                        <div class="setting-desc">尚未設定 SMTP 伺服器，Email 通知停用中</div>
+                    </div>
+                    <span class="badge" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.4);">● 未啟用</span>
+                </div>
+            </div>
+
+            <div class="settings-grid">
+
+                <!-- 平台基本設定 -->
+                <div class="admin-card">
+                    <p class="settings-section-title">🏷️ 平台基本設定</p>
+                    <div class="form-group">
+                        <label>平台名稱</label>
+                        <input type="text" id="platformName" value="PGL Trading Bot">
+                    </div>
+                    <div class="form-group">
+                        <label>客服 Email</label>
+                        <input type="email" id="supportEmail" placeholder="support@pgl.bot">
+                    </div>
+                    <div class="form-group">
+                        <label>前台網址</label>
+                        <input type="text" id="siteUrl" placeholder="https://pgl.bot">
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; margin-top:0.5rem;" onclick="savePlatformSettings()">💾 儲存基本設定</button>
+                </div>
+
+                <!-- 會員控管設定 -->
+                <div class="admin-card">
+                    <p class="settings-section-title">👥 會員控管設定</p>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label">新會員需要審核</div>
+                            <div class="setting-desc">開啟後，新會員需等待管理員核准才能使用</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="requireApproval" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label">允許 Google 登入</div>
+                            <div class="setting-desc">開放使用者以 Google 帳戶快速註冊</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="allowGoogle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label">允許邀請好友</div>
+                            <div class="setting-desc">會員可生成專屬邀請碼帶入新會員</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="allowInvite" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label">開放新會員註冊</div>
+                            <div class="setting-desc">關閉後，暫停所有新用戶申請</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="allowRegister" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="saveMemberSettings()">💾 儲存會員設定</button>
+                </div>
+
+                <!-- 機器人全域風控 -->
+                <div class="admin-card">
+                    <p class="settings-section-title">🤖 機器人全域風控</p>
+                    <div class="form-group">
+                        <label>全平台最大單筆倉位 (%)</label>
+                        <input type="number" id="globalMaxPos" value="10" min="1" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>全平台停損上限 (%)</label>
+                        <input type="number" id="globalStopLoss" value="5" min="0.1" max="50" step="0.1">
+                    </div>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label">連續虧損自動暫停</div>
+                            <div class="setting-desc">機器人連續虧損超過 5 筆時自動暫停</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="autoStopLoss" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label">重大新聞事件過濾</div>
+                            <div class="setting-desc">偵測到高波動新聞時暫停下單</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="newsFilter">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="saveRiskSettings()">💾 儲存風控設定</button>
+                </div>
+
+                <!-- 通知設定 -->
+                <div class="admin-card">
+                    <p class="settings-section-title">🔔 通知設定</p>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label">Email 通知（核准開通）</div>
+                            <div class="setting-desc">核准會員時自動發送開通通知信</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="emailNotify">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label">Telegram 推播通知</div>
+                            <div class="setting-desc">機器人下單時發送 Telegram 訊息</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="telegramNotify">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Telegram Bot Token</label>
+                        <input type="password" id="telegramToken" placeholder="請輸入 Bot Token">
+                    </div>
+                    <div class="form-group">
+                        <label>Telegram Chat ID</label>
+                        <input type="text" id="telegramChatId" placeholder="請輸入 Chat ID">
+                    </div>
+                    <button class="btn btn-primary" style="width:100%;" onclick="saveNotifySettings()">💾 儲存通知設定</button>
+                </div>
+
+                <!-- 危險操作區 -->
+                <div class="admin-card full-col" style="border-color: rgba(239,68,68,0.3);">
+                    <p class="settings-section-title" style="color:#f87171;">⚠️ 危險操作區</p>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label" style="color:#f87171;">暫停全平台所有機器人</div>
+                            <div class="setting-desc">立即停止所有使用者的機器人運行（緊急使用）</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="emergencyStop()">🛑 緊急全停</button>
+                    </div>
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label" style="color:#f87171;">清除所有測試資料</div>
+                            <div class="setting-desc">刪除資料庫中所有待審核的測試帳號</div>
+                        </div>
+                        <button class="btn btn-danger" id="clearDataBtn" onclick="clearTestData()">🗑️ 清除測試資料</button>
+                    </div>
+                </div>
+
+            </div><!-- /settings-grid -->
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+function showToast(msg, type='info') {
+    const tc = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${{success:'✅',error:'❌',info:'ℹ️'}[type]}</span> ${msg}`;
+    tc.appendChild(t);
+    setTimeout(() => { t.classList.add('hide'); t.addEventListener('animationend', () => t.remove()); }, 3000);
+}
+
+// 模擬系統運行時間
+function updateUptime() {
+    const startTime = Date.now();
+    setInterval(() => {
+        const mins = Math.floor((Date.now() - startTime) / 60000);
+        const hrs = Math.floor(mins / 60);
+        const el = document.getElementById('sysUptime');
+        if (el) el.textContent = hrs > 0 ? `${hrs}h ${mins % 60}m` : `${mins}m`;
+    }, 5000);
+    document.getElementById('sysUptime').textContent = '< 1m';
+}
+
+function savePlatformSettings() {
+    showToast('平台基本設定已儲存！', 'success');
+}
+function saveMemberSettings() {
+    showToast('會員控管設定已儲存！', 'success');
+}
+function saveRiskSettings() {
+    showToast('全域風控設定已儲存！', 'success');
+}
+function saveNotifySettings() {
+    const tg = document.getElementById('telegramNotify').checked;
+    if (tg && !document.getElementById('telegramToken').value) {
+        showToast('請填寫 Telegram Bot Token！', 'error');
+        return;
+    }
+    showToast('通知設定已儲存！', 'success');
+}
+function emergencyStop() {
+    if (confirm('⚠️ 確定要緊急停止全平台所有機器人嗎？')) {
+        showToast('🛑 已發送緊急停止指令至所有機器人！', 'error');
+    }
+}
+async function clearTestData() {
+    if (confirm('確定要清除所有待審核的測試資料嗎？')) {
+        try {
+            const res = await fetch('/api/users');
+            if (res.ok) {
+                const users = await res.json();
+                const pendingIds = users.filter(u => u.status === 'pending').map(u => u.id);
+                if (pendingIds.length === 0) {
+                    showToast('沒有待審核的測試資料可清除！', 'info');
+                    return;
+                }
+                const bulkRes = await fetch('/api/users/bulk', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_ids: pendingIds, action: 'reject'})
+                });
+                if (bulkRes.ok) {
+                    showToast('✅ 待審核測試資料已清除！', 'success');
+                } else {
+                    showToast('清除失敗！', 'error');
+                }
+            }
+        } catch(e) {
+            showToast('連線失敗！', 'error');
+        }
+    }
+}
+
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+});
+
+updateUptime();
+</script>
+</body>
+</html>

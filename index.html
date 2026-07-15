@@ -1,0 +1,219 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <script src="mock-api.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PGL Trading Bot | 智能量化交易機器人</title>
+    <meta name="description" content="PGL 交易機器人提供 24/7 全天候 AI 智能交易，高勝率、低風險，助您輕鬆掌握市場趨勢。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=8">
+</head>
+<body>
+    <!-- 導覽列 -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="logo.png" alt="PGL Logo" class="logo-img">
+                <span class="logo-text">PGL Trading</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">核心功能</a></li>
+                <li><a href="#stats">績效數據</a></li>
+                <li><a href="#pricing">方案介紹</a></li>
+                <li class="mobile-only-btn"><a href="login.html" class="btn btn-secondary" style="display: block; text-align: center;">登入</a></li>
+                <li class="mobile-only-btn"><a href="register.html" class="btn btn-primary" style="display: block; text-align: center;">立即開始</a></li>
+            </ul>
+            <div class="desktop-only" style="display: flex; gap: 10px;">
+                <a href="login.html" class="btn btn-secondary nav-cta">登入</a>
+                <a href="register.html" class="btn btn-primary nav-cta">立即開始</a>
+            </div>
+            <div class="mobile-nav-right">
+                <a href="login.html" class="btn btn-secondary mobile-visible-login">登入</a>
+                <div class="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主視覺區 -->
+    <header class="hero" id="home">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+        <div class="hero-content">
+            <div class="hero-badge">Next-Gen AI Trading</div>
+            <h1>重新定義量化交易<br><span class="text-gradient">全自動化高頻獲利</span></h1>
+            <p class="hero-subtitle">
+                PGL 交易機器人結合最新 AI 趨勢分析模型，24 小時為您捕捉市場波動，最大化您的投資報酬率，最小化人為風險。
+            </p>
+            <div class="hero-actions">
+                <a href="register.html" class="btn btn-primary btn-large">免費註冊體驗</a>
+                <a href="#features" class="btn btn-secondary btn-large">了解更多</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat-item">
+                    <span class="stat-value">99.9%</span>
+                    <span class="stat-label">系統可用性</span>
+                </div>
+                <div class="hero-stat-item">
+                    <span class="stat-value">&lt; 10ms</span>
+                    <span class="stat-label">訂單延遲</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="glass-panel trading-dashboard-mock">
+                <!-- 模擬交易面板 -->
+                <div class="mock-header">
+                    <div class="mock-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div class="mock-title">PGL Dashboard - Live</div>
+                </div>
+                <div class="mock-chart">
+                    <div class="chart-line"></div>
+                    <div class="chart-bars">
+                        <div class="bar bar-up" style="height: 40%"></div>
+                        <div class="bar bar-down" style="height: 20%"></div>
+                        <div class="bar bar-up" style="height: 60%"></div>
+                        <div class="bar bar-up" style="height: 80%"></div>
+                        <div class="bar bar-down" style="height: 30%"></div>
+                        <div class="bar bar-up" style="height: 50%"></div>
+                        <div class="bar bar-up" style="height: 90%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 核心功能區 -->
+    <section class="features" id="features">
+        <div class="section-header fade-in">
+            <h2>為什麼選擇 PGL？</h2>
+            <p>專為現代投資者打造的頂級量化交易體驗</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🤖</div>
+                <h3>AI 智能預測模型</h3>
+                <p>運用深度學習技術分析百萬筆歷史數據，精準預測市場趨勢與價格走向，勝率大幅提升。</p>
+            </div>
+            <div class="feature-card fade-in delay-1">
+                <div class="feature-icon">⚡</div>
+                <h3>24/7 全天候執行</h3>
+                <p>無須盯盤，機器人全年無休自動執行交易策略，不錯過任何深夜或假日的黃金進場時機。</p>
+            </div>
+            <div class="feature-card fade-in delay-2">
+                <div class="feature-icon">🛡️</div>
+                <h3>嚴格風險控管</h3>
+                <p>內建動態止損止盈機制與部位控管演算法，在極端行情下也能有效保護您的本金安全。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 方案介紹區 -->
+    <section class="features" id="pricing" style="padding-top: 0;">
+        <div class="section-header fade-in">
+            <h2>靈活的方案選擇</h2>
+            <p>滿足從個人投資者到專業機構的不同交易需求</p>
+        </div>
+        <div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+            <div class="feature-card fade-in" style="display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-color);">
+                <div>
+                    <h3 style="font-size: 1.6rem; margin-bottom: 0.5rem; color: var(--brand-primary-light);">STANDARD</h3>
+                    <div style="font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem;">免費</div>
+                    <ul style="list-style: none; padding: 0; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.95rem; color: var(--text-muted);">
+                        <li>✅ 基礎交易機器人</li>
+                        <li>✅ 支援 1 組交易所連線</li>
+                        <li>❌ AI 智能參數優化</li>
+                        <li>❌ 一對一專屬顧問</li>
+                    </ul>
+                </div>
+                <a href="register.html" class="btn btn-secondary" style="width: 100%;">免費註冊</a>
+            </div>
+            <div class="feature-card fade-in delay-1" style="display: flex; flex-direction: column; justify-content: space-between; border: 2px solid var(--brand-primary); box-shadow: 0 10px 30px rgba(103, 139, 145, 0.15); position: relative;">
+                <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: var(--brand-primary); color: white; padding: 4px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; letter-spacing: 1px;">熱門推薦</div>
+                <div>
+                    <h3 style="font-size: 1.6rem; margin-bottom: 0.5rem; color: var(--brand-primary-light);">PRO</h3>
+                    <div style="font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem;">$99 <span style="font-size: 1rem; color: var(--text-muted);">/ 月</span></div>
+                    <ul style="list-style: none; padding: 0; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.95rem; color: var(--text-muted);">
+                        <li>✅ 進階高頻交易機器人</li>
+                        <li>✅ 支援 3 組交易所連線</li>
+                        <li>✅ AI 智能參數優化</li>
+                        <li>❌ 一對一專屬顧問</li>
+                    </ul>
+                </div>
+                <a href="register.html" class="btn btn-primary" style="width: 100%;">立即升級</a>
+            </div>
+            <div class="feature-card fade-in delay-2" style="display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-color);">
+                <div>
+                    <h3 style="font-size: 1.6rem; margin-bottom: 0.5rem; color: #fbbf24;">👑 VIP</h3>
+                    <div style="font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem; color: #fbbf24;">$299 <span style="font-size: 1rem; color: var(--text-muted);">/ 月</span></div>
+                    <ul style="list-style: none; padding: 0; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.95rem; color: var(--text-muted);">
+                        <li>✅ 全功能量化機器人</li>
+                        <li>✅ 無限制交易所連線</li>
+                        <li>✅ AI 智能參數優化</li>
+                        <li>✅ 一對一專屬顧問服務</li>
+                    </ul>
+                </div>
+                <a href="register.html" class="btn btn-secondary" style="width: 100%; border-color: #fbbf24; color: #fbbf24;">立即訂閱</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 績效數據區 -->
+    <section class="stats" id="stats">
+        <div class="stats-container">
+            <div class="stat-box fade-in">
+                <h3 class="counter" data-target="86">0</h3><span class="stat-unit">%</span>
+                <p>平均月度勝率</p>
+            </div>
+            <div class="stat-box fade-in delay-1">
+                <h3 class="counter" data-target="150">0</h3><span class="stat-unit">M+</span>
+                <p>總交易量 (USDT)</p>
+            </div>
+            <div class="stat-box fade-in delay-2">
+                <h3 class="counter" data-target="12000">0</h3><span class="stat-unit">+</span>
+                <p>全球活躍用戶</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 頁尾 -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="logo">
+                    <img src="logo.png" alt="PGL Logo" class="logo-img">
+                    <span class="logo-text">PGL Trading</span>
+                </div>
+                <p>您的智能交易首選，用科技賦能財富。</p>
+            </div>
+            <div class="footer-links">
+                <div class="link-column">
+                    <h4>產品</h4>
+                    <a href="#">功能特色</a>
+                    <a href="#">收費方案</a>
+                    <a href="#">更新日誌</a>
+                </div>
+                <div class="link-column">
+                    <h4>支援</h4>
+                    <a href="#">使用教學</a>
+                    <a href="#">常見問題</a>
+                    <a href="#">聯絡客服</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 PGL Trading Bot. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js?v=8"></script>
+</body>
+</html>
