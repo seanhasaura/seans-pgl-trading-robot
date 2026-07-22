@@ -59,6 +59,18 @@ function parseCSV(csvText) {
 
 window.GistService = {
     async getAccountEquity(targetFileName = 'equity_Portfolio_TradeBot_6346149.json') {
+        try {
+            // 優先使用 Direct Raw Gist URL (無 GitHub API 60次/小時頻率限制，0.1秒瞬間載入)
+            const rawUrl = `https://gist.githubusercontent.com/pglengineer/${window.GIST_CONFIG.EQUITY_ID}/raw/${targetFileName}`;
+            const res = await fetch(rawUrl, { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) return data;
+            }
+        } catch (e) {
+            console.warn('[GistService] Direct Raw Gist fetch failed, falling back to API', e);
+        }
+
         const rawContent = await fetchGistContent(window.GIST_CONFIG.EQUITY_ID, targetFileName);
         if (!rawContent) return [];
         try {
