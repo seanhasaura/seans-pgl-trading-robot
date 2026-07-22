@@ -305,11 +305,18 @@ function renderEquityChart(equityData) {
     const canvas = document.getElementById('equityChartCanvas');
     if (!canvas) return;
 
-    const labels = equityData.map(d => {
+    // 若數據點過多 (> 300 筆)，自動進行均勻抽樣以提升繪圖順暢度
+    let displayData = equityData;
+    if (equityData.length > 300) {
+        const step = Math.ceil(equityData.length / 300);
+        displayData = equityData.filter((_, idx) => idx % step === 0 || idx === equityData.length - 1);
+    }
+
+    const labels = displayData.map(d => {
         const date = new Date(d.timestamp);
         return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     });
-    const values = equityData.map(d => d.equity);
+    const values = displayData.map(d => d.equity);
 
     if (equityChartInstance) {
         equityChartInstance.destroy();

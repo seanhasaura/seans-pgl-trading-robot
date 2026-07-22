@@ -27,13 +27,21 @@ async function fetchGistContent(gistId, targetFileName = null) {
             return null;
         }
 
+        let fileObj = null;
         if (targetFileName && data.files[targetFileName]) {
-            return data.files[targetFileName].content;
+            fileObj = data.files[targetFileName];
+        } else {
+            const firstFileKey = Object.keys(data.files)[0];
+            fileObj = data.files[firstFileKey];
         }
 
-        // 如果未指定檔名或無精確比對，返回第一個檔案內容
-        const firstFileKey = Object.keys(data.files)[0];
-        return data.files[firstFileKey].content;
+        // 若檔案較大被 GitHub API 截斷，自動使用 raw_url 抓取完整內容
+        if (fileObj.truncated && fileObj.raw_url) {
+            const rawRes = await fetch(fileObj.raw_url, { cache: 'no-store' });
+            return await rawRes.text();
+        }
+
+        return fileObj.content;
     } catch (error) {
         console.error(`[GistService] 抓取 Gist [${gistId}] 失敗:`, error);
         return null;
@@ -66,10 +74,11 @@ function parseCSV(csvText) {
 window.GistService = {
     /**
      * 讀取歷史淨值資料 (JSON 格式)
-     * [{ "timestamp": "...", "equity": 25250.53 }]
+     * 預設讀取 equity_Portfolio_TradeBot_6346149.json
+     * [{ "timestamp": "...", "equity": 31700.35 }]
      */
-    async getAccountEquity() {
-        const rawContent = await fetchGistContent(window.GIST_CONFIG.EQUITY_ID);
+    async getAccountEquity(targetFileName = 'equity_Portfolio_TradeBot_6346149.json') {
+        const rawContent = await fetchGistContent(window.GIST_CONFIG.EQUITY_ID, targetFileName);
         if (!rawContent) return [];
         try {
             return JSON.parse(rawContent);
