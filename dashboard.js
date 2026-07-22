@@ -1,4 +1,4 @@
-﻿
+
 document.addEventListener('DOMContentLoaded', () => {
     const userEmail = localStorage.getItem('user_email');
     const userName = localStorage.getItem('user_name');
@@ -243,5 +243,131 @@ function simulatePnl() {
         }
     }, 2000);
 }
+
+// --- Gist 實時數據載入與帳戶淨值繪製 ---
+let equityChartInstance = null;
+
+async function loadGistOverviewData() {
+    if (!window.GistService) return;
+    
+    try {
+        const equityData = await window.GistService.getAccountEquity();
+        const tradeHistory = await window.GistService.getTradeHistory();
+
+        if (equityData && equityData.length > 0) {
+            const latestEquity = equityData[equityData.length - 1].equity;
+            const initialEquity = equityData[0].equity;
+            const totalPnL = latestEquity - initialEquity;
+
+            // 1. 更新總收益 (All PnL)
+            const pnlEl = document.getElementById('totalBotPnlVal');
+            if (pnlEl) {
+                pnlEl.textContent = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                pnlEl.style.color = totalPnL >= 0 ? '#10b981' : '#f87171';
+            }
+
+            // 2. 更新總交易筆數
+            const tradesEl = document.getElementById('totalBotTradesVal');
+            if (tradesEl && tradeHistory) {
+                tradesEl.textContent = tradeHistory.length;
+            }
+
+            // 3. 計算並更新整體回撤 (MDD)
+            let peak = equityData[0].equity;
+            let maxDD = 0;
+            equityData.forEach(item => {
+                if (item.equity > peak) peak = item.equity;
+                const dd = (peak - item.equity) / peak;
+                if (dd > maxDD) maxDD = dd;
+            });
+
+            const mddEl = document.getElementById('overallBotMddVal');
+            if (mddEl) {
+                mddEl.textContent = `-${(maxDD * 100).toFixed(2)}%`;
+            }
+
+            // 4. 更新最後時間標籤
+            const updateLabel = document.getElementById('equityLastUpdate');
+            if (updateLabel) {
+                const lastTime = new Date(equityData[equityData.length - 1].timestamp).toLocaleTimeString();
+                updateLabel.textContent = `即時連線 (最後同步: ${lastTime})`;
+            }
+
+            // 5. 繪製淨值走勢圖
+            renderEquityChart(equityData);
+        }
+    } catch (err) {
+        console.error("載入 Gist 總覽數據失敗:", err);
+    }
+}
+
+function renderEquityChart(equityData) {
+    const canvas = document.getElementById('equityChartCanvas');
+    if (!canvas) return;
+
+    const labels = equityData.map(d => {
+        const date = new Date(d.timestamp);
+        return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    });
+    const values = equityData.map(d => d.equity);
+
+    if (equityChartInstance) {
+        equityChartInstance.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    equityChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '帳戶總淨值 ($USD)',
+                data: values,
+                borderColor: '#34d399',
+                backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                borderWidth: 2,
+                pointRadius: values.length > 50 ? 0 : 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ` 淨值: $${context.raw.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af', maxTicksLimit: 8 }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: {
+                        color: '#9ca3af',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 頁面加載或切換時自動讀取 Gist
+document.addEventListener('DOMContentLoaded', () => {
+    loadGistOverviewData();
+    setInterval(loadGistOverviewData, 30000);
+});
+
 
 

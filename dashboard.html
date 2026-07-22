@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <script src="mock-api.js"></script>
@@ -79,6 +79,19 @@
                         <div class="admin-card attr-stat-card">
                             <p class="text-muted" data-i18n="stat_overall_mdd">整體回撤 (MDD)</p>
                             <div class="attr-stat-val" id="overallBotMddVal" style="color: #f87171;">0.00%</div>
+                        </div>
+                    </div>
+
+                    <!-- 即時帳戶淨值走勢圖 (Gist Live Data) -->
+                    <div class="admin-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                                <span>📈</span> <span>實時帳戶總淨值走勢 (Account Equity Curve)</span>
+                            </h3>
+                            <span id="equityLastUpdate" style="font-size: 0.8rem; color: #678B91;">更新中...</span>
+                        </div>
+                        <div style="height: 280px; width: 100%; position: relative;">
+                            <canvas id="equityChartCanvas"></canvas>
                         </div>
                     </div>
 
@@ -461,6 +474,25 @@
                         <h3 data-i18n="attr_heatmap_title">🔥 時段熱力圖（週 × 時段）</h3>
                         <p class="text-muted" data-i18n="attr_heatmap_desc" style="font-size:0.82rem;margin-bottom:1.2rem;">顏色越深代表盈虧絕對值越大，綠色獲利 / 紅色虧損</p>
                         <div id="heatmapGrid"></div>
+                    </div>
+
+                    <!-- 歷史相似天數走勢分析 (Gist Live Data) -->
+                    <div class="admin-card" style="margin-bottom:1.5rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+                            <div>
+                                <h3 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                                    <span>🔍</span> <span>LSTM-Autoencoder 歷史相似天數比對 (Similar Days)</span>
+                                </h3>
+                                <p class="text-muted" style="font-size:0.82rem; margin:4px 0 0 0;">根據模型特徵向量算出的 Top 相似歷史日走勢與後續報酬率路徑</p>
+                            </div>
+                            <select id="similarAssetSelect" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); color: white; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                                <option value="NAS100">NAS100 (納斯達克 100)</option>
+                                <option value="EURUSD">EUR/USD (歐元/美元)</option>
+                            </select>
+                        </div>
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="similarDaysChartCanvas"></canvas>
+                        </div>
                     </div>
 
                     <!-- 交易明細 -->
@@ -943,6 +975,7 @@
     </div>
 
     <script src="i18n.js?v=7"></script>
+    <script src="gist-service.js?v=7"></script>
     <script src="dashboard.js?v=7"></script>
     <script src="bots.js?v=7"></script>
     <script src="attribution.js?v=7"></script>
