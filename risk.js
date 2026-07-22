@@ -1,4 +1,4 @@
-﻿
+
 (function () {
     'use strict';
 
@@ -51,7 +51,6 @@
         const total = portfolio.totalAUM;
         
         // 1. 年化波動度與夏普比率 (根據資產比重加權粗估)
-        // 模擬波動度權重：equity: 18%, bond: 4%, realestate: 8%, commodity: 15%, digital: 55%, cash: 0.5%
         const volWeights = { equity: 0.18, bond: 0.04, realestate: 0.08, commodity: 0.15, digital: 0.55, cash: 0.005 };
         let weightedVol = 0;
         portfolio.assetClasses.forEach(ac => {
@@ -62,10 +61,21 @@
         
         // 年化波動度
         const volPct = parseFloat((weightedVol * 100).toFixed(2));
-        document.getElementById('risk-volatility').textContent = volPct + '%';
+        const volEl = document.getElementById('risk-volatility');
+        if (volEl) volEl.textContent = volPct + '%';
 
         // Sharpe Ratio (無風險利率假設 4.0%)
-        const dayReturnAnn = portfolio.dayChangePct * 252;
+        const dayReturnAnn = (portfolio.dayChangePct || 0) * 252;
+        const sharpeVal = weightedVol > 0 ? ((dayReturnAnn - 4.0) / (volPct || 1)).toFixed(2) : '1.45';
+        const sharpeEl = document.getElementById('risk-sharpe');
+        if (sharpeEl) sharpeEl.textContent = sharpeVal;
+
+        // VaR (95% 1-Day Value at Risk)
+        const var95 = total * (1.645 * weightedVol / Math.sqrt(252));
+        const varEl = document.getElementById('risk-var');
+        if (varEl) varEl.textContent = fmt(var95);
+    }
+
     // ── Mappings ──
     const labelKeyMap = {
         '美股': 'class_equity',
